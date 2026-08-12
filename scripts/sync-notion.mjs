@@ -15,7 +15,7 @@ import { join } from "path";
 const TOKEN           = process.env.NOTION_TOKEN;
 const DB_AUFGABEN     = process.env.NOTION_DB_AUFGABEN     || "0ba369bad4074d348f4ac5124b7e1040";
 const DB_REFLEXIONEN  = process.env.NOTION_DB_REFLEXIONEN  || "8a20d28a79d44ff4b2d9cce9d118fe1c";
-const OUTPUT = join(process.cwd(), "notion-xp.json");
+const OUTPUT          = join(process.cwd(), "public", "notion-xp.json");
 
 if (!TOKEN) {
   console.error("❌ NOTION_TOKEN fehlt. Als Umgebungsvariable oder GitHub Secret setzen.");
@@ -33,11 +33,12 @@ const XP_MAP = {
 
 // Notion-Bereich → App-Skill
 const BEREICH_SKILL = {
-  "🎓 Schule":    "school",
-  "🌏 Sprachen":  "chinese",   // Chinesisch ist die Haupt-Sprache
-  "🔬 Lernen":    "school",    // Allgemeines Lernen → Schule
-  "💪 Sport":     "sport",
-  // Arbeit + Sonstiges → kein XP (nicht persönlicher Entwicklungsfokus)
+  "🎓 Schule":       "school",
+  "🌏 Sprachen":     "chinese",   // Chinesisch ist die Haupt-Sprache
+  "🔬 Lernen":       "school",    // Allgemeines Lernen → Schule
+  "💪 Sport":        "sport",
+  "🎯 Nebenprojekt": "neben",     // Nebenprojekte → eigene Säule
+  // Arbeit + Sonstiges → kein XP
 };
 
 // ─── Notion API ───────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ async function queryAll(dbId, filter) {
 // ─── Hauptlogik ───────────────────────────────────────────────────────────────
 async function main() {
   // Bestehende base_xp aus JSON lesen (manuell gesetzte Startpunkte beibehalten)
-  let base_xp = { chinese: 850, sport: 720, school: 1100 };
+  let base_xp = { chinese: 1150, sport: 780, school: 1400, neben: 220 };
   try {
     const existing = JSON.parse(await readFile(OUTPUT, "utf8"));
     if (existing.base_xp) base_xp = existing.base_xp;
@@ -88,8 +89,8 @@ async function main() {
     select:   { equals: "✅ Erledigt" },
   });
 
-  const task_xp    = { chinese: 0, sport: 0, school: 0 };
-  const task_count = { chinese: 0, sport: 0, school: 0 };
+  const task_xp    = { chinese: 0, sport: 0, school: 0, neben: 0 };
+  const task_count = { chinese: 0, sport: 0, school: 0, neben: 0 };
 
   for (const page of tasks) {
     const bereich = page.properties["Bereich"]?.select?.name;
@@ -117,6 +118,7 @@ async function main() {
     task_xp.chinese += reviewBonus;
     task_xp.sport   += reviewBonus;
     task_xp.school  += reviewBonus;
+    task_xp.neben   += reviewBonus;
     console.log(`   ${reviews.length} Reviews (+${reviewBonus} XP pro Skill)`);
   } catch (e) {
     console.warn("   Reflexionen übersprungen:", e.message);
@@ -127,6 +129,7 @@ async function main() {
     chinese: base_xp.chinese + task_xp.chinese,
     sport:   base_xp.sport   + task_xp.sport,
     school:  base_xp.school  + task_xp.school,
+    neben:   base_xp.neben   + task_xp.neben,
   };
 
   const output = {
