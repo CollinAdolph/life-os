@@ -1,0 +1,25 @@
+{
+  "_comment": "Auto-generiert durch GitHub Actions. base_xp = manuell gesetzt. task_xp = aus Notion-Aufgaben.",
+  "synced_at": "2026-08-12T05:00:00.000Z",
+  "base_xp": {
+    "chinese": 850,
+    "sport":   720,
+    "school":  1100
+  },
+  "task_xp": {
+    "chinese": 0,
+    "sport":   0,
+    "school":  0
+  },
+  "total_xp": {
+    "chinese": 850,
+    "sport":   720,
+    "school":  1100
+  },
+  "task_count": {
+    "chinese": 0,
+    "sport":   0,
+    "school":  0
+  },
+  "review_count": 0
+}

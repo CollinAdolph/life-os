@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fortschritt · Collin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0e0c; font-family: 'Inter', system-ui; }
+    #root { min-height: 100vh; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
+</head>
+<body>
+  <div id="root">
+    <div style="background:#0f0e0c;min-height:100vh;display:flex;align-items:center;justify-content:center;color:rgba(237,232,224,.3);font-family:Inter,system-ui;font-size:12px;">
+      Wird geladen…
+    </div>
+  </div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── Konfiguration ──────────────────────────────────────────────────────────
+const STORAGE_KEY    = "life-os-v3";
+const NOTION_XP_URL  = "./notion-xp.json";
+
+const SKILLS = {
+  chinese: { label: "Chinesisch",      abbr: "ZH", color: "#5a7a5f" },
+  sport:   { label: "Sport & Körper",  abbr: "SP", color: "#7a5f3a" },
+  school:  { label: "Schule & Abitur", abbr: "SC", color: "#3a5a7a" },
+};
+
+const THRESHOLDS = [0,100,250,450,700,1000,1400,1900,2500,3200,4000];
+const STUFEN = [
+  "Einsteiger","Aufsteiger","Fortgeschrittener","Fundiert",
+  "Kompetent","Experte","Senior","Führend","Elite","Exzellenz",
+];
+
+const SCHWIERIGKEIT = [
+  { label:"Täglich",     xp:5,   note:"Tägliche Gewohnheit, Review, Vokabeln"      },
+  { label:"Standard",    xp:15,  note:"Reguläre Aufgabe"                            },
+  { label:"Komplex",     xp:30,  note:"Anspruchsvolle Arbeit, Lernblock"            },
+  { label:"Kritisch",    xp:60,  note:"Wichtiger Meilenstein, Batch abgeschlossen"  },
+  { label:"Meilenstein", xp:100, note:"Klausur, großer Abschluss"                  },
+];
+
+const ERFOLGE = [
+  { id:"first",      name:"Erster Eintrag",         desc:"XP erstmals vergeben"                         },
+  { id:"batch1",     name:"Batch abgeschlossen",     desc:"Anki-Batch fertiggestellt"                    },
+  { id:"v500",       name:"500 Vokabeln",            desc:"500 chinesische Vokabeln aktiv"               },
+  { id:"v1000",      name:"1.000 Vokabeln",          desc:"1.000 chinesische Vokabeln aktiv"             },
+  { id:"v5000",      name:"5.000 Vokabeln",          desc:"5.000 chinesische Vokabeln aktiv"             },
+  { id:"streak7",    name:"7-Tage-Serie",            desc:"Sieben Tage Praxis ohne Unterbrechung"        },
+  { id:"klausur",    name:"Klausur bestanden",       desc:"Schriftliche Prüfung mit ≥ 14 Punkten"        },
+  { id:"konsistent", name:"Konsistente Woche",       desc:"Alle Gewohnheiten eine Woche eingehalten"     },
+  { id:"reflexion",  name:"Wochenreflexion",         desc:"Ersten Wochen-Review abgeschlossen"           },
+  { id:"gesprach",   name:"Erstes Gespräch",         desc:"Freies Gespräch auf Chinesisch geführt"       },
+  { id:"block1",     name:"Block 1 abgeschlossen",   desc:"Powerbuilding-Phase 1 vollständig absolviert" },
+  { id:"lv5",        name:"Stufe 05 erreicht",       desc:"Gesamt-Fortschrittsstufe 05"                  },
+  { id:"lv7",        name:"Stufe 07 erreicht",       desc:"Gesamt-Fortschrittsstufe 07"                  },
+  { id:"shanghai",   name:"Shanghai",                desc:"Internship gestartet"                         },
+];
+
+const INIT_MEILENSTEINE = {
+  chinese: [
+    {id:"c1", text:"Batch 4 fertigstellen",           done:false},
+    {id:"c2", text:"Batch 5 fertigstellen",           done:false},
+    {id:"c3", text:"Batch 6 fertigstellen",           done:false},
+    {id:"c4", text:"Täglichen Input-Slot etablieren", done:false},
+    {id:"c5", text:"Gesprächspartner finden",         done:false},
+  ],
+  sport: [
+    {id:"s1", text:"Diätphase abschließen",           done:false},
+    {id:"s2", text:"Block 1 · Wochen 1–2",            done:false},
+    {id:"s3", text:"Block 1 · Wochen 3–4",            done:false},
+    {id:"s4", text:"Block 1 · Wochen 5–6 + Deload",  done:false},
+  ],
+  school: [
+    {id:"g1", text:"Anki-System Mathe + Chemie aufgebaut",  done:true},
+    {id:"g2", text:"Erdkunde-Lernstrategie entwickeln",     done:false},
+    {id:"g3", text:"Erste fünf Übungsklausuren absolviert", done:false},
+    {id:"g4", text:"Klausurdaten eingetragen (September)",  done:false},
+  ],
+};
+
+const BASE_XP = { chinese: 850, sport: 720, school: 1100 };
+
+const BLANK = {
+  synced_xp:  { ...BASE_XP },
+  manual_xp:  { chinese:0, sport:0, school:0 },
+  synced_at:  null,
+  erfolge: {
+    first:"2026-06-15", batch1:"2026-08-01", v500:"2026-06-20",
+    v1000:"2026-07-10", v5000:"2026-07-28",  reflexion:"2026-08-10",
+    gesprach:"2026-07-15", lv5:"2026-07-20",
+  },
+  meilensteine: INIT_MEILENSTEINE,
+  log: [
+    {ts:"10.08.2026",skill:"school", xp:30, src:"notion",note:"Anki Mathe & Chemie aufgebaut"},
+    {ts:"01.08.2026",skill:"chinese",xp:100,src:"notion",note:"Batch 3 abgeschlossen"},
+    {ts:"28.07.2026",skill:"chinese",xp:60, src:"notion",note:"5.000 Vokabeln Meilenstein"},
+  ],
+};
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const getLvl = xp => { let l=1; for(let i=1;i<THRESHOLDS.length;i++) if(xp>=THRESHOLDS[i]) l=i+1; else break; return Math.min(l,10); };
+const getBar = xp => {
+  const l=getLvl(xp); if(l>=10) return {pct:100,cur:xp-THRESHOLDS[9],needed:800};
+  const s=THRESHOLDS[l-1],e=THRESHOLDS[l]; return {pct:Math.round(((xp-s)/(e-s))*100),cur:xp-s,needed:e-s};
+};
+const addXP    = (a,b) => ({ chinese:a.chinese+b.chinese, sport:a.sport+b.sport, school:a.school+b.school });
+const sumAll   = o => Object.values(o).reduce((a,b)=>a+b,0);
+const pad2     = n => String(n).padStart(2,"0");
+const fmtDate  = iso => iso ? new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : null;
+
+// localStorage (works in every browser)
+const Storage = {
+  get(key) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):null; } catch { return null; } },
+  set(key,val) { try { localStorage.setItem(key,JSON.stringify(val)); } catch {} },
+};
+
+async function fetchNotionXP() {
+  try { const r=await fetch(NOTION_XP_URL,{cache:"no-store"}); return r.ok?await r.json():null; }
+  catch { return null; }
+}
+
+// ─── CSS ────────────────────────────────────────────────────────────────────
+const css = `
+  .root{background:#0f0e0c;min-height:100vh;color:#ede8e0;font-family:'Inter',system-ui;padding-bottom:60px}
+  .inner{max-width:600px;margin:0 auto;padding:0 20px}
+  .hdr{background:#0f0e0c;border-bottom:1px solid rgba(255,248,230,.07);padding:22px 20px 18px}
+  .hdr-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+  .hdr-name{font-size:20px;font-weight:700}
+  .hdr-sub{font-size:10px;color:rgba(237,232,224,.35);margin-bottom:14px}
+  .hdr-lvl-wrap{text-align:right}
+  .hdr-lvl-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9d7e4a}
+  .hdr-lvl-num{font-size:36px;font-weight:700;color:#9d7e4a;line-height:1;font-variant-numeric:tabular-nums}
+  .hdr-lvl-ttl{font-size:10px;color:rgba(237,232,224,.4)}
+  .bar-row{display:flex;justify-content:space-between;font-size:10px;color:rgba(237,232,224,.3);margin-bottom:5px}
+  .bar-wrap{height:2px;background:rgba(255,248,230,.08);border-radius:99px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+  .sync-row{display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(237,232,224,.25);margin-top:8px}
+  .sync-dot{width:5px;height:5px;border-radius:50%;background:#5a7a5f;flex-shrink:0}
+  .sync-dot.stale{background:rgba(237,232,224,.18)}
+  .tabs{display:flex;border-bottom:1px solid rgba(255,248,230,.07)}
+  .tab{padding:11px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;transition:color .15s;margin-bottom:-1px;white-space:nowrap;letter-spacing:.02em}
+  .tab.on{color:#9d7e4a;border-bottom:1px solid #9d7e4a}
+  .tab.off{color:rgba(237,232,224,.28);border-bottom:1px solid transparent}
+  .sk-card{padding:18px 0;border-bottom:1px solid rgba(255,248,230,.06)}
+  .sk-card:last-child{border-bottom:none}
+  .sk-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
+  .sk-name{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(237,232,224,.45);margin-bottom:2px}
+  .sk-sub{font-size:10px;color:rgba(237,232,224,.22)}
+  .sk-detail{font-size:9px;color:rgba(237,232,224,.18);margin-top:2px;font-variant-numeric:tabular-nums}
+  .sk-right{text-align:right}
+  .sk-lvl{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .sk-xp{font-size:10px;color:rgba(237,232,224,.3);margin-top:2px;font-variant-numeric:tabular-nums}
+  .bar-lbl{display:flex;justify-content:space-between;font-size:9px;color:rgba(237,232,224,.22);margin:5px 0 11px}
+  .notion-note{font-size:9px;color:rgba(237,232,224,.2);background:rgba(255,248,230,.04);border:1px solid rgba(255,248,230,.07);border-radius:3px;padding:4px 8px;display:inline-block;margin-bottom:9px}
+  .p-opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .p-opt{padding:5px 12px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s}
+  .p-note{font-size:10px;color:rgba(237,232,224,.28);margin-bottom:10px}
+  .p-row{display:flex;gap:8px}
+  .btn-ok{flex:1;padding:9px;font-size:12px;font-weight:700;border:none;border-radius:4px;cursor:pointer}
+  .btn-x{padding:9px 14px;background:none;border:1px solid rgba(255,248,230,.1);color:rgba(237,232,224,.35);border-radius:4px;font-size:12px;cursor:pointer}
+  .btn-add{width:100%;padding:8px;background:none;border:1px dashed rgba(255,248,230,.1);color:rgba(237,232,224,.28);border-radius:4px;font-size:11px;cursor:pointer;font-weight:500;transition:all .15s}
+  .btn-add:hover{border-color:rgba(255,248,230,.2);color:rgba(237,232,224,.5)}
+  .eg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:20px}
+  .eg-card{padding:14px;border-radius:4px;cursor:pointer;transition:all .15s}
+  .eg-card.on{background:#161410;border:1px solid rgba(157,126,74,.2)}
+  .eg-card.off{background:#121210;border:1px solid rgba(255,248,230,.05);opacity:.4}
+  .eg-name{font-size:12px;font-weight:600;margin-bottom:3px}
+  .eg-desc{font-size:10px;color:rgba(237,232,224,.38);line-height:1.4}
+  .eg-date{font-size:9px;color:#9d7e4a;margin-top:7px}
+  .eg-hint{font-size:9px;color:rgba(237,232,224,.18);margin-top:7px}
+  .ms-sec{padding-top:20px}
+  .ms-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .ms-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(237,232,224,.32)}
+  .ms-prog{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums}
+  .ms-bar{height:1px;background:rgba(255,248,230,.07);border-radius:99px;margin-bottom:13px;overflow:hidden}
+  .ms-bfill{height:100%;border-radius:99px;transition:width .5s}
+  .ms-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,248,230,.04);cursor:pointer}
+  .ms-item:last-child{border-bottom:none}
+  .ms-chk{width:15px;height:15px;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;transition:all .15s}
+  .ms-txt{font-size:12.5px;flex:1;transition:color .15s}
+  .ms-xp{font-size:9px;color:rgba(237,232,224,.18)}
+  .ms-gap{height:20px}
+  .lg-sec{padding-top:20px}
+  .lg-empty{text-align:center;color:rgba(237,232,224,.2);font-size:12px;padding:48px 0}
+  .lg-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,248,230,.04);font-size:12px}
+  .lg-badge{width:24px;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .lg-src{font-size:8px;color:rgba(237,232,224,.2);margin-top:1px}
+  .lg-note{flex:1;color:rgba(237,232,224,.55)}
+  .lg-date{font-size:10px;color:rgba(237,232,224,.22);font-variant-numeric:tabular-nums}
+  .lg-xp{font-size:12px;font-weight:700;color:#9d7e4a;min-width:48px;text-align:right;font-variant-numeric:tabular-nums}
+  .lg-clr{font-size:10px;color:rgba(237,232,224,.18);background:none;border:none;cursor:pointer;float:right;margin-top:12px}
+  .toast{position:fixed;top:0;left:0;right:0;background:#161410;border-bottom:1px solid rgba(157,126,74,.25);color:#c4a055;padding:10px 20px;text-align:center;font-size:12px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .2s;letter-spacing:.03em}
+  .toast.show{transform:translateY(0)}
+  .setup-box{font-size:11px;color:rgba(237,232,224,.3);background:rgba(255,248,230,.03);border:1px solid rgba(255,248,230,.07);border-radius:4px;padding:12px 14px;margin-top:16px;line-height:1.6}
+`;
+
+// ─── App ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [data,    setData]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab,     setTab]     = useState("fortschritt");
+  const [picking, setPicking] = useState(null);
+  const [preset,  setPreset]  = useState(1);
+  const [toast,   setToast]   = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const saved = Storage.get(STORAGE_KEY);
+      const state = saved ? saved : JSON.parse(JSON.stringify(BLANK));
+      if (!state.synced_xp) { state.synced_xp={...BASE_XP}; state.manual_xp={chinese:0,sport:0,school:0}; }
+      const notionData = await fetchNotionXP();
+      if (notionData?.total_xp) { state.synced_xp=notionData.total_xp; state.synced_at=notionData.synced_at; }
+      setData(state);
+      setLoading(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!data || loading) return;
+    Storage.set(STORAGE_KEY, data);
+  }, [data, loading]);
+
+  const notify = msg => { setToast(msg); setTimeout(()=>setToast(null),2600); };
+
+  const gainManualXP = (skill, amount, reason) => {
+    if (!amount||amount<=0) return;
+    setData(prev => {
+      const newManual = {...prev.manual_xp, [skill]: prev.manual_xp[skill]+amount};
+      const entry = {ts:new Date().toLocaleDateString("de-DE"),skill,xp:amount,src:"manual",note:reason};
+      return {...prev, manual_xp:newManual, log:[entry,...(prev.log||[])].slice(0,40)};
+    });
+    notify(`+${amount} XP · ${SKILLS[skill].label} (manuell)`);
+    setPicking(null);
+  };
+
+  const unlockErfolg = id => {
+    if (!(data?.erfolge||{})[id]) {
+      setData(prev=>({...prev,erfolge:{...prev.erfolge,[id]:new Date().toISOString().slice(0,10)}}));
+      notify(`${ERFOLGE.find(e=>e.id===id)?.name} — freigeschaltet`);
+    }
+  };
+
+  const toggleMS = (skill, mid) => {
+    setData(prev => {
+      const ms=prev.meilensteine[skill], wasOpen=!ms.find(m=>m.id===mid)?.done;
+      const newMs={...prev.meilensteine,[skill]:ms.map(m=>m.id===mid?{...m,done:!m.done}:m)};
+      if(wasOpen){
+        const newManual={...prev.manual_xp,[skill]:prev.manual_xp[skill]+30};
+        notify("Meilenstein erreicht — +30 XP");
+        return {...prev,meilensteine:newMs,manual_xp:newManual};
+      }
+      return {...prev,meilensteine:newMs};
+    });
+  };
+
+  if(loading||!data) return null;
+
+  const xp       = addXP(data.synced_xp, data.manual_xp);
+  const total    = sumAll(xp);
+  const totalLvl = getLvl(total);
+  const totalBar = getBar(total);
+  const unlocked = Object.keys(data.erfolge||{}).length;
+  const isStale  = data.synced_at && (Date.now()-new Date(data.synced_at).getTime()>26*3600*1000);
+
+  return (
+    <div className="root">
+      <style>{css}</style>
+      <div className={`toast ${toast?"show":""}`}>{toast||""}</div>
+
+      <div className="hdr">
+        <div className="inner">
+          <div className="hdr-row">
+            <div>
+              <div className="hdr-name">Collin Adolph</div>
+              <div className="hdr-sub">{STUFEN[totalLvl-1]} · {total.toLocaleString("de-DE")} XP gesamt</div>
+            </div>
+            <div className="hdr-lvl-wrap">
+              <div className="hdr-lvl-lbl">Stufe</div>
+              <div className="hdr-lvl-num">{pad2(totalLvl)}</div>
+              <div className="hdr-lvl-ttl">{STUFEN[totalLvl-1]}</div>
+            </div>
+          </div>
+          <div className="bar-row">
+            <span>{totalBar.cur} / {totalBar.needed} XP</span>
+            <span>→ Stufe {pad2(Math.min(totalLvl+1,10))}</span>
+          </div>
+          <div className="bar-wrap">
+            <div className="bar-fill" style={{width:`${totalBar.pct}%`,background:"#9d7e4a"}}/>
+          </div>
+          <div className="sync-row">
+            <div className={`sync-dot ${isStale?"stale":""}`}/>
+            <span>{data.synced_at ? `Notion-Sync: ${fmtDate(data.synced_at)}` : "Notion-Sync: noch nicht konfiguriert"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="inner">
+        <div className="tabs">
+          {[["fortschritt","Fortschritt"],["erfolge",`Erfolge (${unlocked}/${ERFOLGE.length})`],["meilensteine","Meilensteine"],["verlauf","Verlauf"]].map(([id,lbl])=>(
+            <button key={id} className={`tab ${tab===id?"on":"off"}`} onClick={()=>setTab(id)}>{lbl}</button>
+          ))}
+        </div>
+
+        {/* FORTSCHRITT */}
+        {tab==="fortschritt" && (
+          <div style={{paddingTop:4}}>
+            {Object.entries(SKILLS).map(([key,sk]) => {
+              const skillXP=xp[key], lvl=getLvl(skillXP), bar=getBar(skillXP), open=picking===key;
+              const synced=data.synced_xp[key], manual=data.manual_xp[key];
+              return (
+                <div key={key} className="sk-card">
+                  <div className="sk-top">
+                    <div>
+                      <div className="sk-name">{sk.label}</div>
+                      <div className="sk-sub">{STUFEN[lvl-1]}</div>
+                      <div className="sk-detail">{synced.toLocaleString("de-DE")} Notion{manual>0?` + ${manual.toLocaleString("de-DE")} manuell`:""}</div>
+                    </div>
+                    <div className="sk-right">
+                      <div className="sk-lvl" style={{color:sk.color}}>{pad2(lvl)}</div>
+                      <div className="sk-xp">{skillXP.toLocaleString("de-DE")} XP</div>
+                    </div>
+                  </div>
+                  <div className="bar-wrap"><div className="bar-fill" style={{width:`${bar.pct}%`,background:sk.color}}/></div>
+                  <div className="bar-lbl"><span>{bar.cur} / {bar.needed} XP bis Stufe {pad2(Math.min(lvl+1,10))}</span><span>{bar.pct}%</span></div>
+                  {open ? (
+                    <div>
+                      <div className="notion-note">Notion-Aufgaben werden täglich automatisch synchronisiert. Hier nur Aktivitäten außerhalb von Notion eintragen.</div>
+                      <div className="p-opts">
+                        {SCHWIERIGKEIT.map((s,i)=>(
+                          <button key={i} className="p-opt" onClick={()=>setPreset(i)} style={{borderColor:preset===i?sk.color:"rgba(255,248,230,.1)",background:preset===i?`${sk.color}18`:"none",color:preset===i?sk.color:"rgba(237,232,224,.38)"}}>
+                            {s.label} +{s.xp}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="p-note">{SCHWIERIGKEIT[preset].note}</div>
+                      <div className="p-row">
+                        <button className="btn-ok" style={{background:sk.color,color:"#0f0e0c"}} onClick={()=>gainManualXP(key,SCHWIERIGKEIT[preset].xp,SCHWIERIGKEIT[preset].label)}>
+                          +{SCHWIERIGKEIT[preset].xp} XP eintragen
+                        </button>
+                        <button className="btn-x" onClick={()=>setPicking(null)}>Abbrechen</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button className="btn-add" onClick={()=>{setPicking(key);setPreset(1);}}>Manueller XP-Eintrag (außerhalb Notion)</button>
+                  )}
+                </div>
+              );
+            })}
+            {!data.synced_at && (
+              <div className="setup-box">
+                <strong style={{color:"rgba(237,232,224,.6)"}}>Notion-Sync einrichten:</strong> Notion-Integration anlegen → GitHub Secret setzen → Workflow starten.<br/>
+                Danach werden abgehakte Aufgaben täglich automatisch als XP gezählt. Anleitung: SETUP.md im Repository.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ERFOLGE */}
+        {tab==="erfolge" && (
+          <div className="eg-grid">
+            {ERFOLGE.map(e => {
+              const done=!!(data.erfolge||{})[e.id];
+              return (
+                <div key={e.id} className={`eg-card ${done?"on":"off"}`} onClick={()=>!done&&unlockErfolg(e.id)}>
+                  <div className="eg-name" style={{color:done?"#c4a055":"rgba(237,232,224,.55)"}}>{e.name}</div>
+                  <div className="eg-desc">{e.desc}</div>
+                  {done ? <div className="eg-date">Erreicht {(data.erfolge||{})[e.id]}</div>
+                        : <div className="eg-hint">Klick zum Markieren</div>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* MEILENSTEINE */}
+        {tab==="meilensteine" && (
+          <div className="ms-sec">
+            {Object.entries(SKILLS).map(([key,sk]) => {
+              const ms=data.meilensteine[key], done=ms.filter(m=>m.done).length, pct=Math.round((done/ms.length)*100);
+              return (
+                <div key={key}>
+                  <div className="ms-hdr">
+                    <span className="ms-lbl">{sk.label}</span>
+                    <span className="ms-prog" style={{color:sk.color}}>{done} / {ms.length}</span>
+                  </div>
+                  <div className="ms-bar"><div className="ms-bfill" style={{width:`${pct}%`,background:sk.color}}/></div>
+                  {ms.map(m => (
+                    <div key={m.id} className="ms-item" onClick={()=>toggleMS(key,m.id)}>
+                      <div className="ms-chk" style={{border:`1.5px solid ${m.done?sk.color:"rgba(255,248,230,.12)"}`,background:m.done?sk.color:"none",color:"#0f0e0c"}}>{m.done?"✓":""}</div>
+                      <span className="ms-txt" style={{color:m.done?"rgba(237,232,224,.28)":"rgba(237,232,224,.82)",textDecoration:m.done?"line-through":"none"}}>{m.text}</span>
+                      {!m.done && <span className="ms-xp">+30</span>}
+                    </div>
+                  ))}
+                  <div className="ms-gap"/>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* VERLAUF */}
+        {tab==="verlauf" && (
+          <div className="lg-sec">
+            {(!data.log||data.log.length===0) ? (
+              <div className="lg-empty">Noch keine Einträge.</div>
+            ) : (
+              <>
+                {data.log.map((e,i)=>{
+                  const sk=SKILLS[e.skill];
+                  return (
+                    <div key={i} className="lg-item">
+                      <div className="lg-badge" style={{background:`${sk?.color}20`,color:sk?.color}}>{sk?.abbr}</div>
+                      <div style={{flex:1}}>
+                        <div className="lg-note">{e.note||sk?.label}</div>
+                        <div className="lg-src">{e.src==="notion"?"via Notion":"manuell"}</div>
+                      </div>
+                      <span className="lg-date">{e.ts}</span>
+                      <span className="lg-xp">+{e.xp}</span>
+                    </div>
+                  );
+                })}
+                <button className="lg-clr" onClick={()=>setData(p=>({...p,log:[]}))}>Verlauf leeren</button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

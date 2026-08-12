@@ -1,0 +1,37 @@
+name: Notion XP Sync
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # Täglich 05:00 UTC (06:00 MEZ / 07:00 MESZ)
+  workflow_dispatch:        # Auch manuell über GitHub Actions auslösbar
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # Für git push
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js 20 einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Notion synchronisieren
+        run: node scripts/sync-notion.mjs
+        env:
+          NOTION_TOKEN:          ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_AUFGABEN:    "0ba369bad4074d348f4ac5124b7e1040"
+          NOTION_DB_REFLEXIONEN: "8a20d28a79d44ff4b2d9cce9d118fe1c"
+
+      - name: Änderungen committen und pushen
+        run: |
+          git config user.name  "Notion Sync Bot"
+          git config user.email "actions@github.com"
+          git add notion-xp.json
+          git diff --cached --quiet \
+            || git commit -m "sync: Notion XP $(date -u '+%Y-%m-%d')" \
+            && git push
