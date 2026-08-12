@@ -1,72 +1,71 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fortschritt · Collin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0f0e0c; font-family: 'Inter', system-ui; }
-    #root { min-height: 100vh; }
-  </style>
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortschritt · Collin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #191919; font-family: 'Inter', system-ui; }
+  #root { min-height: 100vh; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
 </head>
 <body>
-  <div id="root">
-    <div style="background:#0f0e0c;min-height:100vh;display:flex;align-items:center;justify-content:center;color:rgba(237,232,224,.3);font-family:Inter,system-ui;font-size:12px;">
-      Wird geladen…
-    </div>
-  </div>
+<div id="root">
+  <div style="background:#191919;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#999;font-family:Inter,system-ui;font-size:12px;">Wird geladen…</div>
+</div>
 
 <script type="text/babel">
 const { useState, useEffect } = React;
 
 // ─── Konfiguration ──────────────────────────────────────────────────────────
-const STORAGE_KEY    = "life-os-v3";
-const NOTION_XP_URL  = "./notion-xp.json";
+const STORAGE_KEY   = "life-os-v4";
+const NOTION_XP_URL = "./notion-xp.json";
 
 const SKILLS = {
-  chinese: { label: "Chinesisch",      abbr: "ZH", color: "#5a7a5f" },
-  sport:   { label: "Sport & Körper",  abbr: "SP", color: "#7a5f3a" },
-  school:  { label: "Schule & Abitur", abbr: "SC", color: "#3a5a7a" },
+  chinese: { label: "Chinesisch",      abbr: "ZH", color: "#68a672" },
+  sport:   { label: "Sport & Körper",  abbr: "SP", color: "#b08948" },
+  school:  { label: "Schule & Abitur", abbr: "SC", color: "#5b8fc9" },
+  neben:   { label: "Nebenprojekte",   abbr: "NP", color: "#b56bb0" },
 };
 
-const THRESHOLDS = [0,100,250,450,700,1000,1400,1900,2500,3200,4000];
+// Neu kalibrierte Skala — deutlich höhere Schwellen, mehr Raum nach oben
+const THRESHOLDS = [0, 500, 1200, 2200, 3600, 5500, 8000, 11000, 15000, 20000, 26000];
 const STUFEN = [
-  "Einsteiger","Aufsteiger","Fortgeschrittener","Fundiert",
-  "Kompetent","Experte","Senior","Führend","Elite","Exzellenz",
+  "Anfang","Aufbau","Solide","Fortgeschritten","Kompetent",
+  "Stark","Fortgeschritten+","Sehr stark","Exzellent","Meisterhaft",
 ];
 
-const SCHWIERIGKEIT = [
-  { label:"Täglich",     xp:5,   note:"Tägliche Gewohnheit, Review, Vokabeln"      },
-  { label:"Standard",    xp:15,  note:"Reguläre Aufgabe"                            },
-  { label:"Komplex",     xp:30,  note:"Anspruchsvolle Arbeit, Lernblock"            },
-  { label:"Kritisch",    xp:60,  note:"Wichtiger Meilenstein, Batch abgeschlossen"  },
-  { label:"Meilenstein", xp:100, note:"Klausur, großer Abschluss"                  },
+const DEFAULT_SCHWIERIGKEIT = [
+  { label:"Täglich",     xp:5   },
+  { label:"Standard",    xp:15  },
+  { label:"Komplex",     xp:30  },
+  { label:"Kritisch",    xp:60  },
+  { label:"Meilenstein", xp:100 },
 ];
 
-const ERFOLGE = [
-  { id:"first",      name:"Erster Eintrag",         desc:"XP erstmals vergeben"                         },
-  { id:"batch1",     name:"Batch abgeschlossen",     desc:"Anki-Batch fertiggestellt"                    },
-  { id:"v500",       name:"500 Vokabeln",            desc:"500 chinesische Vokabeln aktiv"               },
-  { id:"v1000",      name:"1.000 Vokabeln",          desc:"1.000 chinesische Vokabeln aktiv"             },
-  { id:"v5000",      name:"5.000 Vokabeln",          desc:"5.000 chinesische Vokabeln aktiv"             },
-  { id:"streak7",    name:"7-Tage-Serie",            desc:"Sieben Tage Praxis ohne Unterbrechung"        },
-  { id:"klausur",    name:"Klausur bestanden",       desc:"Schriftliche Prüfung mit ≥ 14 Punkten"        },
-  { id:"konsistent", name:"Konsistente Woche",       desc:"Alle Gewohnheiten eine Woche eingehalten"     },
-  { id:"reflexion",  name:"Wochenreflexion",         desc:"Ersten Wochen-Review abgeschlossen"           },
-  { id:"gesprach",   name:"Erstes Gespräch",         desc:"Freies Gespräch auf Chinesisch geführt"       },
-  { id:"block1",     name:"Block 1 abgeschlossen",   desc:"Powerbuilding-Phase 1 vollständig absolviert" },
-  { id:"lv5",        name:"Stufe 05 erreicht",       desc:"Gesamt-Fortschrittsstufe 05"                  },
-  { id:"lv7",        name:"Stufe 07 erreicht",       desc:"Gesamt-Fortschrittsstufe 07"                  },
-  { id:"shanghai",   name:"Shanghai",                desc:"Internship gestartet"                         },
+// Realistischer, moderater Startstand → Gesamt ~Stufe 4
+const BASE_XP = { chinese: 1150, sport: 780, school: 1400, neben: 220 };
+
+const DEFAULT_ERFOLGE = [
+  { id:"e1",  name:"Erster Eintrag",        desc:"XP erstmals vergeben",                  done:"2026-06-15" },
+  { id:"e2",  name:"Batch abgeschlossen",    desc:"Anki-Batch fertiggestellt",             done:"2026-08-01" },
+  { id:"e3",  name:"1.000 Vokabeln",         desc:"1.000 chinesische Vokabeln aktiv",      done:"2026-07-10" },
+  { id:"e4",  name:"5.000 Vokabeln",         desc:"5.000 chinesische Vokabeln aktiv",      done:"2026-07-28" },
+  { id:"e5",  name:"Wochenreflexion",        desc:"Ersten Wochen-Review abgeschlossen",    done:"2026-08-10" },
+  { id:"e6",  name:"Erstes Gespräch",        desc:"Freies Gespräch auf Chinesisch",        done:"2026-07-15" },
+  { id:"e7",  name:"Klausur bestanden",      desc:"Schriftliche Prüfung mit ≥ 14 Punkten", done:null },
+  { id:"e8",  name:"Block 1 abgeschlossen",  desc:"Powerbuilding-Phase 1 vollständig",     done:null },
+  { id:"e9",  name:"7-Tage-Serie",           desc:"Sieben Tage Praxis ohne Lücke",         done:null },
+  { id:"e10", name:"Shanghai",               desc:"Internship gestartet",                  done:null },
 ];
 
-const INIT_MEILENSTEINE = {
+const DEFAULT_MEILENSTEINE = {
   chinese: [
     {id:"c1", text:"Batch 4 fertigstellen",           done:false},
     {id:"c2", text:"Batch 5 fertigstellen",           done:false},
@@ -75,201 +74,234 @@ const INIT_MEILENSTEINE = {
     {id:"c5", text:"Gesprächspartner finden",         done:false},
   ],
   sport: [
-    {id:"s1", text:"Diätphase abschließen",           done:false},
-    {id:"s2", text:"Block 1 · Wochen 1–2",            done:false},
-    {id:"s3", text:"Block 1 · Wochen 3–4",            done:false},
-    {id:"s4", text:"Block 1 · Wochen 5–6 + Deload",  done:false},
+    {id:"s1", text:"Diätphase abschließen",          done:false},
+    {id:"s2", text:"Block 1 · Wochen 1–2",           done:false},
+    {id:"s3", text:"Block 1 · Wochen 3–4",           done:false},
+    {id:"s4", text:"Block 1 · Wochen 5–6 + Deload", done:false},
   ],
   school: [
-    {id:"g1", text:"Anki-System Mathe + Chemie aufgebaut",  done:true},
-    {id:"g2", text:"Erdkunde-Lernstrategie entwickeln",     done:false},
-    {id:"g3", text:"Erste fünf Übungsklausuren absolviert", done:false},
-    {id:"g4", text:"Klausurdaten eingetragen (September)",  done:false},
+    {id:"g1", text:"Anki-System Mathe + Chemie aufgebaut", done:true},
+    {id:"g2", text:"Erdkunde-Lernstrategie entwickeln",    done:false},
+    {id:"g3", text:"Erste fünf Übungsklausuren",           done:false},
+    {id:"g4", text:"Klausurdaten eingetragen (September)", done:false},
+  ],
+  neben: [
+    {id:"n1", text:"Handschrift: Daumen-Position korrigieren", done:false},
+    {id:"n2", text:"Handschrift: Drill-Sheets flüssig",        done:false},
   ],
 };
 
-const BASE_XP = { chinese: 850, sport: 720, school: 1100 };
-
 const BLANK = {
-  synced_xp:  { ...BASE_XP },
-  manual_xp:  { chinese:0, sport:0, school:0 },
-  synced_at:  null,
-  erfolge: {
-    first:"2026-06-15", batch1:"2026-08-01", v500:"2026-06-20",
-    v1000:"2026-07-10", v5000:"2026-07-28",  reflexion:"2026-08-10",
-    gesprach:"2026-07-15", lv5:"2026-07-20",
-  },
-  meilensteine: INIT_MEILENSTEINE,
+  synced_xp: { ...BASE_XP },
+  manual_xp: { chinese:0, sport:0, school:0, neben:0 },
+  synced_at: null,
+  schwierigkeit: DEFAULT_SCHWIERIGKEIT,
+  erfolge: DEFAULT_ERFOLGE,
+  meilensteine: DEFAULT_MEILENSTEINE,
   log: [
-    {ts:"10.08.2026",skill:"school", xp:30, src:"notion",note:"Anki Mathe & Chemie aufgebaut"},
-    {ts:"01.08.2026",skill:"chinese",xp:100,src:"notion",note:"Batch 3 abgeschlossen"},
-    {ts:"28.07.2026",skill:"chinese",xp:60, src:"notion",note:"5.000 Vokabeln Meilenstein"},
+    {ts:"10.08.2026", skill:"school",  xp:30,  src:"notion", note:"Anki Mathe & Chemie aufgebaut"},
+    {ts:"01.08.2026", skill:"chinese", xp:100, src:"notion", note:"Batch 3 abgeschlossen"},
   ],
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const getLvl = xp => { let l=1; for(let i=1;i<THRESHOLDS.length;i++) if(xp>=THRESHOLDS[i]) l=i+1; else break; return Math.min(l,10); };
 const getBar = xp => {
-  const l=getLvl(xp); if(l>=10) return {pct:100,cur:xp-THRESHOLDS[9],needed:800};
+  const l=getLvl(xp); if(l>=10) return {pct:100,cur:xp-THRESHOLDS[9],needed:6000};
   const s=THRESHOLDS[l-1],e=THRESHOLDS[l]; return {pct:Math.round(((xp-s)/(e-s))*100),cur:xp-s,needed:e-s};
 };
-const addXP    = (a,b) => ({ chinese:a.chinese+b.chinese, sport:a.sport+b.sport, school:a.school+b.school });
-const sumAll   = o => Object.values(o).reduce((a,b)=>a+b,0);
-const pad2     = n => String(n).padStart(2,"0");
-const fmtDate  = iso => iso ? new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : null;
+const addXP  = (a,b) => { const r={}; for(const k in a) r[k]=(a[k]||0)+(b[k]||0); return r; };
+const sumAll = o => Object.values(o).reduce((a,b)=>a+b,0);
+const pad2   = n => String(n).padStart(2,"0");
+const uid    = () => Math.random().toString(36).slice(2,9);
+const fmtSync = iso => iso ? new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : null;
 
-// localStorage (works in every browser)
 const Storage = {
-  get(key) { try { const v=localStorage.getItem(key); return v?JSON.parse(v):null; } catch { return null; } },
-  set(key,val) { try { localStorage.setItem(key,JSON.stringify(val)); } catch {} },
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch{ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} },
 };
+async function fetchNotionXP(){ try{ const r=await fetch(NOTION_XP_URL,{cache:"no-store"}); return r.ok?await r.json():null; }catch{ return null; } }
 
-async function fetchNotionXP() {
-  try { const r=await fetch(NOTION_XP_URL,{cache:"no-store"}); return r.ok?await r.json():null; }
-  catch { return null; }
-}
-
-// ─── CSS ────────────────────────────────────────────────────────────────────
+// ─── CSS · Notion Dark (#191919) ────────────────────────────────────────────
 const css = `
-  .root{background:#0f0e0c;min-height:100vh;color:#ede8e0;font-family:'Inter',system-ui;padding-bottom:60px}
+  .root{background:#191919;min-height:100vh;color:#e6e6e6;font-family:'Inter',system-ui;padding-bottom:56px}
   .inner{max-width:600px;margin:0 auto;padding:0 20px}
-  .hdr{background:#0f0e0c;border-bottom:1px solid rgba(255,248,230,.07);padding:22px 20px 18px}
+
+  .hdr{background:#191919;border-bottom:1px solid rgba(255,255,255,.09);padding:22px 20px 18px}
   .hdr-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-  .hdr-name{font-size:20px;font-weight:700}
-  .hdr-sub{font-size:10px;color:rgba(237,232,224,.35);margin-bottom:14px}
+  .hdr-name{font-size:20px;font-weight:700;color:#fff}
+  .hdr-sub{font-size:11px;color:#9b9b9b;margin-bottom:14px}
   .hdr-lvl-wrap{text-align:right}
-  .hdr-lvl-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9d7e4a}
-  .hdr-lvl-num{font-size:36px;font-weight:700;color:#9d7e4a;line-height:1;font-variant-numeric:tabular-nums}
-  .hdr-lvl-ttl{font-size:10px;color:rgba(237,232,224,.4)}
-  .bar-row{display:flex;justify-content:space-between;font-size:10px;color:rgba(237,232,224,.3);margin-bottom:5px}
-  .bar-wrap{height:2px;background:rgba(255,248,230,.08);border-radius:99px;overflow:hidden}
+  .hdr-lvl-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c99a4e}
+  .hdr-lvl-num{font-size:36px;font-weight:700;color:#d9a758;line-height:1;font-variant-numeric:tabular-nums}
+  .hdr-lvl-ttl{font-size:10px;color:#9b9b9b}
+  .bar-row{display:flex;justify-content:space-between;font-size:10px;color:#8f8f8f;margin-bottom:5px;font-variant-numeric:tabular-nums}
+  .bar-wrap{height:3px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
   .bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
-  .sync-row{display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(237,232,224,.25);margin-top:8px}
-  .sync-dot{width:5px;height:5px;border-radius:50%;background:#5a7a5f;flex-shrink:0}
-  .sync-dot.stale{background:rgba(237,232,224,.18)}
-  .tabs{display:flex;border-bottom:1px solid rgba(255,248,230,.07)}
-  .tab{padding:11px 14px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;transition:color .15s;margin-bottom:-1px;white-space:nowrap;letter-spacing:.02em}
-  .tab.on{color:#9d7e4a;border-bottom:1px solid #9d7e4a}
-  .tab.off{color:rgba(237,232,224,.28);border-bottom:1px solid transparent}
-  .sk-card{padding:18px 0;border-bottom:1px solid rgba(255,248,230,.06)}
+  .sync-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#8f8f8f;margin-top:9px}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:#68a672;flex-shrink:0}
+  .sync-dot.stale{background:#777}
+
+  .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.09);overflow-x:auto}
+  .tab{padding:11px 13px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;transition:color .15s;margin-bottom:-1px;white-space:nowrap;letter-spacing:.01em}
+  .tab.on{color:#d9a758;border-bottom:2px solid #d9a758}
+  .tab.off{color:#8f8f8f;border-bottom:2px solid transparent}
+  .tab.off:hover{color:#c4c4c4}
+
+  .sk-card{padding:17px 0;border-bottom:1px solid rgba(255,255,255,.07)}
   .sk-card:last-child{border-bottom:none}
-  .sk-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
-  .sk-name{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(237,232,224,.45);margin-bottom:2px}
-  .sk-sub{font-size:10px;color:rgba(237,232,224,.22)}
-  .sk-detail{font-size:9px;color:rgba(237,232,224,.18);margin-top:2px;font-variant-numeric:tabular-nums}
+  .sk-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+  .sk-name{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#c4c4c4;margin-bottom:2px}
+  .sk-sub{font-size:10px;color:#8f8f8f}
+  .sk-detail{font-size:10px;color:#7d7d7d;margin-top:2px;font-variant-numeric:tabular-nums}
   .sk-right{text-align:right}
-  .sk-lvl{font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-  .sk-xp{font-size:10px;color:rgba(237,232,224,.3);margin-top:2px;font-variant-numeric:tabular-nums}
-  .bar-lbl{display:flex;justify-content:space-between;font-size:9px;color:rgba(237,232,224,.22);margin:5px 0 11px}
-  .notion-note{font-size:9px;color:rgba(237,232,224,.2);background:rgba(255,248,230,.04);border:1px solid rgba(255,248,230,.07);border-radius:3px;padding:4px 8px;display:inline-block;margin-bottom:9px}
-  .p-opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-  .p-opt{padding:5px 12px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s}
-  .p-note{font-size:10px;color:rgba(237,232,224,.28);margin-bottom:10px}
+  .sk-lvl{font-size:27px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .sk-xp{font-size:10px;color:#9b9b9b;margin-top:2px;font-variant-numeric:tabular-nums}
+  .bar-lbl{display:flex;justify-content:space-between;font-size:10px;color:#8f8f8f;margin:6px 0 11px;font-variant-numeric:tabular-nums}
+
+  .notion-note{font-size:10px;color:#9b9b9b;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:4px;padding:6px 9px;margin-bottom:10px;line-height:1.5}
+  .p-opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+  .p-opt{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s}
   .p-row{display:flex;gap:8px}
-  .btn-ok{flex:1;padding:9px;font-size:12px;font-weight:700;border:none;border-radius:4px;cursor:pointer}
-  .btn-x{padding:9px 14px;background:none;border:1px solid rgba(255,248,230,.1);color:rgba(237,232,224,.35);border-radius:4px;font-size:12px;cursor:pointer}
-  .btn-add{width:100%;padding:8px;background:none;border:1px dashed rgba(255,248,230,.1);color:rgba(237,232,224,.28);border-radius:4px;font-size:11px;cursor:pointer;font-weight:500;transition:all .15s}
-  .btn-add:hover{border-color:rgba(255,248,230,.2);color:rgba(237,232,224,.5)}
-  .eg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:20px}
-  .eg-card{padding:14px;border-radius:4px;cursor:pointer;transition:all .15s}
-  .eg-card.on{background:#161410;border:1px solid rgba(157,126,74,.2)}
-  .eg-card.off{background:#121210;border:1px solid rgba(255,248,230,.05);opacity:.4}
+  .btn-ok{flex:1;padding:9px;font-size:12px;font-weight:700;border:none;border-radius:5px;cursor:pointer}
+  .btn-x{padding:9px 14px;background:none;border:1px solid rgba(255,255,255,.14);color:#b0b0b0;border-radius:5px;font-size:12px;cursor:pointer}
+  .btn-add{width:100%;padding:8px;background:none;border:1px dashed rgba(255,255,255,.15);color:#9b9b9b;border-radius:5px;font-size:11px;cursor:pointer;font-weight:500;transition:all .15s}
+  .btn-add:hover{border-color:rgba(255,255,255,.28);color:#c4c4c4}
+
+  .eg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:18px}
+  .eg-card{padding:13px;border-radius:6px;transition:all .15s;position:relative}
+  .eg-card.on{background:#242017;border:1px solid rgba(217,167,88,.32)}
+  .eg-card.off{background:#1f1f1f;border:1px solid rgba(255,255,255,.08)}
   .eg-name{font-size:12px;font-weight:600;margin-bottom:3px}
-  .eg-desc{font-size:10px;color:rgba(237,232,224,.38);line-height:1.4}
-  .eg-date{font-size:9px;color:#9d7e4a;margin-top:7px}
-  .eg-hint{font-size:9px;color:rgba(237,232,224,.18);margin-top:7px}
-  .ms-sec{padding-top:20px}
-  .ms-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .ms-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(237,232,224,.32)}
+  .eg-desc{font-size:10px;color:#9b9b9b;line-height:1.4}
+  .eg-date{font-size:9px;color:#d9a758;margin-top:6px;font-variant-numeric:tabular-nums}
+  .eg-hint{font-size:9px;color:#6f6f6f;margin-top:6px;cursor:pointer}
+  .eg-del{position:absolute;top:8px;right:9px;font-size:13px;color:#6f6f6f;cursor:pointer;line-height:1;background:none;border:none}
+  .eg-del:hover{color:#c96a5f}
+
+  .ms-sec{padding-top:18px}
+  .ms-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .ms-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b8b8b8}
   .ms-prog{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums}
-  .ms-bar{height:1px;background:rgba(255,248,230,.07);border-radius:99px;margin-bottom:13px;overflow:hidden}
+  .ms-bar{height:2px;background:rgba(255,255,255,.09);border-radius:99px;margin-bottom:12px;overflow:hidden}
   .ms-bfill{height:100%;border-radius:99px;transition:width .5s}
-  .ms-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,248,230,.04);cursor:pointer}
+  .ms-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
   .ms-item:last-child{border-bottom:none}
-  .ms-chk{width:15px;height:15px;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;transition:all .15s}
-  .ms-txt{font-size:12.5px;flex:1;transition:color .15s}
-  .ms-xp{font-size:9px;color:rgba(237,232,224,.18)}
+  .ms-chk{width:16px;height:16px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s;cursor:pointer}
+  .ms-txt{font-size:12.5px;flex:1;transition:color .15s;cursor:pointer}
+  .ms-del{font-size:14px;color:#5f5f5f;cursor:pointer;background:none;border:none;padding:0 2px}
+  .ms-del:hover{color:#c96a5f}
+  .ms-add{display:flex;gap:6px;margin-top:8px}
+  .ms-input{flex:1;background:#1f1f1f;border:1px solid rgba(255,255,255,.12);color:#e6e6e6;border-radius:5px;padding:6px 9px;font-size:12px;font-family:inherit}
+  .ms-input:focus{outline:none;border-color:rgba(255,255,255,.3)}
+  .ms-addbtn{padding:6px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#c4c4c4;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer}
   .ms-gap{height:20px}
-  .lg-sec{padding-top:20px}
-  .lg-empty{text-align:center;color:rgba(237,232,224,.2);font-size:12px;padding:48px 0}
-  .lg-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,248,230,.04);font-size:12px}
-  .lg-badge{width:24px;height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
-  .lg-src{font-size:8px;color:rgba(237,232,224,.2);margin-top:1px}
-  .lg-note{flex:1;color:rgba(237,232,224,.55)}
-  .lg-date{font-size:10px;color:rgba(237,232,224,.22);font-variant-numeric:tabular-nums}
-  .lg-xp{font-size:12px;font-weight:700;color:#9d7e4a;min-width:48px;text-align:right;font-variant-numeric:tabular-nums}
-  .lg-clr{font-size:10px;color:rgba(237,232,224,.18);background:none;border:none;cursor:pointer;float:right;margin-top:12px}
-  .toast{position:fixed;top:0;left:0;right:0;background:#161410;border-bottom:1px solid rgba(157,126,74,.25);color:#c4a055;padding:10px 20px;text-align:center;font-size:12px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .2s;letter-spacing:.03em}
+
+  .lg-sec{padding-top:18px}
+  .lg-empty{text-align:center;color:#7d7d7d;font-size:12px;padding:44px 0}
+  .lg-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+  .lg-badge{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .lg-note{flex:1;color:#c4c4c4}
+  .lg-src{font-size:8px;color:#7d7d7d;margin-top:1px}
+  .lg-date{font-size:10px;color:#8f8f8f;font-variant-numeric:tabular-nums}
+  .lg-xp{font-size:12px;font-weight:700;color:#d9a758;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
+  .lg-clr{font-size:10px;color:#7d7d7d;background:none;border:none;cursor:pointer;float:right;margin-top:12px}
+
+  .toast{position:fixed;top:0;left:0;right:0;background:#242017;border-bottom:1px solid rgba(217,167,88,.35);color:#e0b968;padding:11px 20px;text-align:center;font-size:12px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .2s;letter-spacing:.02em}
   .toast.show{transform:translateY(0)}
-  .setup-box{font-size:11px;color:rgba(237,232,224,.3);background:rgba(255,248,230,.03);border:1px solid rgba(255,248,230,.07);border-radius:4px;padding:12px 14px;margin-top:16px;line-height:1.6}
+
+  .add-erfolg{grid-column:1/-1;padding:11px;background:none;border:1px dashed rgba(255,255,255,.15);color:#9b9b9b;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500}
+  .add-erfolg:hover{border-color:rgba(255,255,255,.28);color:#c4c4c4}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal{background:#1f1f1f;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:20px;width:100%;max-width:340px}
+  .modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:14px}
+  .modal-input{width:100%;background:#191919;border:1px solid rgba(255,255,255,.14);color:#e6e6e6;border-radius:6px;padding:8px 11px;font-size:13px;font-family:inherit;margin-bottom:10px}
+  .modal-input:focus{outline:none;border-color:rgba(255,255,255,.32)}
+  .modal-row{display:flex;gap:8px;margin-top:6px}
+  .modal-ok{flex:1;padding:9px;background:#d9a758;color:#191919;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+  .modal-x{padding:9px 16px;background:none;border:1px solid rgba(255,255,255,.14);color:#b0b0b0;border-radius:6px;font-size:12px;cursor:pointer}
 `;
 
 // ─── App ─────────────────────────────────────────────────────────────────────
-function App() {
-  const [data,    setData]    = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tab,     setTab]     = useState("fortschritt");
-  const [picking, setPicking] = useState(null);
-  const [preset,  setPreset]  = useState(1);
-  const [toast,   setToast]   = useState(null);
+function App(){
+  const [data,setData]       = useState(null);
+  const [loading,setLoading] = useState(true);
+  const [tab,setTab]         = useState("fortschritt");
+  const [picking,setPicking] = useState(null);
+  const [preset,setPreset]   = useState(1);
+  const [toast,setToast]     = useState(null);
+  const [msInput,setMsInput] = useState({});
+  const [modal,setModal]     = useState(null); // {name, desc}
 
-  useEffect(() => {
-    (async () => {
-      const saved = Storage.get(STORAGE_KEY);
-      const state = saved ? saved : JSON.parse(JSON.stringify(BLANK));
-      if (!state.synced_xp) { state.synced_xp={...BASE_XP}; state.manual_xp={chinese:0,sport:0,school:0}; }
-      const notionData = await fetchNotionXP();
-      if (notionData?.total_xp) { state.synced_xp=notionData.total_xp; state.synced_at=notionData.synced_at; }
-      setData(state);
-      setLoading(false);
-    })();
-  }, []);
+  useEffect(()=>{ (async()=>{
+    const saved = Storage.get(STORAGE_KEY);
+    let state = saved ? saved : JSON.parse(JSON.stringify(BLANK));
+    // Migrations-Guard
+    if(!state.synced_xp) state.synced_xp={...BASE_XP};
+    if(!state.manual_xp) state.manual_xp={chinese:0,sport:0,school:0,neben:0};
+    if(state.manual_xp.neben===undefined) state.manual_xp.neben=0;
+    if(state.synced_xp.neben===undefined) state.synced_xp.neben=BASE_XP.neben;
+    if(!state.schwierigkeit) state.schwierigkeit=DEFAULT_SCHWIERIGKEIT;
+    if(!Array.isArray(state.erfolge)) state.erfolge=DEFAULT_ERFOLGE;
+    if(!state.meilensteine) state.meilensteine=DEFAULT_MEILENSTEINE;
+    if(!state.meilensteine.neben) state.meilensteine.neben=DEFAULT_MEILENSTEINE.neben;
+    const notionData = await fetchNotionXP();
+    if(notionData?.total_xp){
+      state.synced_xp = { ...state.synced_xp, ...notionData.total_xp };
+      state.synced_at = notionData.synced_at;
+    }
+    setData(state); setLoading(false);
+  })(); },[]);
 
-  useEffect(() => {
-    if (!data || loading) return;
-    Storage.set(STORAGE_KEY, data);
-  }, [data, loading]);
+  useEffect(()=>{ if(data&&!loading) Storage.set(STORAGE_KEY,data); },[data,loading]);
 
-  const notify = msg => { setToast(msg); setTimeout(()=>setToast(null),2600); };
+  const notify = m => { setToast(m); setTimeout(()=>setToast(null),2500); };
 
-  const gainManualXP = (skill, amount, reason) => {
-    if (!amount||amount<=0) return;
-    setData(prev => {
-      const newManual = {...prev.manual_xp, [skill]: prev.manual_xp[skill]+amount};
-      const entry = {ts:new Date().toLocaleDateString("de-DE"),skill,xp:amount,src:"manual",note:reason};
-      return {...prev, manual_xp:newManual, log:[entry,...(prev.log||[])].slice(0,40)};
+  const gainManualXP = (skill,amount,reason) => {
+    if(!amount||amount<=0) return;
+    setData(p=>{
+      const manual={...p.manual_xp,[skill]:(p.manual_xp[skill]||0)+amount};
+      const entry={ts:new Date().toLocaleDateString("de-DE"),skill,xp:amount,src:"manual",note:reason};
+      return {...p,manual_xp:manual,log:[entry,...(p.log||[])].slice(0,40)};
     });
-    notify(`+${amount} XP · ${SKILLS[skill].label} (manuell)`);
+    notify(`+${amount} XP · ${SKILLS[skill].label}`);
     setPicking(null);
   };
 
-  const unlockErfolg = id => {
-    if (!(data?.erfolge||{})[id]) {
-      setData(prev=>({...prev,erfolge:{...prev.erfolge,[id]:new Date().toISOString().slice(0,10)}}));
-      notify(`${ERFOLGE.find(e=>e.id===id)?.name} — freigeschaltet`);
-    }
+  const toggleErfolg = id => setData(p=>({
+    ...p, erfolge:p.erfolge.map(e=>e.id===id?{...e,done:e.done?null:new Date().toISOString().slice(0,10)}:e)
+  }));
+  const delErfolg = id => setData(p=>({...p,erfolge:p.erfolge.filter(e=>e.id!==id)}));
+  const addErfolg = (name,desc) => {
+    if(!name.trim()) return;
+    setData(p=>({...p,erfolge:[...p.erfolge,{id:uid(),name:name.trim(),desc:desc.trim(),done:null}]}));
+    setModal(null); notify("Erfolg hinzugefügt");
   };
 
-  const toggleMS = (skill, mid) => {
-    setData(prev => {
-      const ms=prev.meilensteine[skill], wasOpen=!ms.find(m=>m.id===mid)?.done;
-      const newMs={...prev.meilensteine,[skill]:ms.map(m=>m.id===mid?{...m,done:!m.done}:m)};
-      if(wasOpen){
-        const newManual={...prev.manual_xp,[skill]:prev.manual_xp[skill]+30};
-        notify("Meilenstein erreicht — +30 XP");
-        return {...prev,meilensteine:newMs,manual_xp:newManual};
-      }
-      return {...prev,meilensteine:newMs};
-    });
+  const toggleMS = (skill,mid) => setData(p=>{
+    const ms=p.meilensteine[skill], wasOpen=!ms.find(m=>m.id===mid)?.done;
+    const newMs={...p.meilensteine,[skill]:ms.map(m=>m.id===mid?{...m,done:!m.done}:m)};
+    if(wasOpen){
+      const manual={...p.manual_xp,[skill]:(p.manual_xp[skill]||0)+30};
+      notify("Meilenstein erreicht — +30 XP");
+      return {...p,meilensteine:newMs,manual_xp:manual};
+    }
+    return {...p,meilensteine:newMs};
+  });
+  const delMS = (skill,mid) => setData(p=>({...p,meilensteine:{...p.meilensteine,[skill]:p.meilensteine[skill].filter(m=>m.id!==mid)}}));
+  const addMS = skill => {
+    const text=(msInput[skill]||"").trim(); if(!text) return;
+    setData(p=>({...p,meilensteine:{...p.meilensteine,[skill]:[...p.meilensteine[skill],{id:uid(),text,done:false}]}}));
+    setMsInput(s=>({...s,[skill]:""}));
   };
 
   if(loading||!data) return null;
 
-  const xp       = addXP(data.synced_xp, data.manual_xp);
+  const xp       = addXP(data.synced_xp,data.manual_xp);
   const total    = sumAll(xp);
   const totalLvl = getLvl(total);
   const totalBar = getBar(total);
-  const unlocked = Object.keys(data.erfolge||{}).length;
+  const doneCount= data.erfolge.filter(e=>e.done).length;
   const isStale  = data.synced_at && (Date.now()-new Date(data.synced_at).getTime()>26*3600*1000);
 
   return (
@@ -277,6 +309,24 @@ function App() {
       <style>{css}</style>
       <div className={`toast ${toast?"show":""}`}>{toast||""}</div>
 
+      {/* Modal für neuen Erfolg */}
+      {modal && (
+        <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)setModal(null);}}>
+          <div className="modal">
+            <div className="modal-title">Neuer Erfolg</div>
+            <input className="modal-input" placeholder="Name" value={modal.name}
+              onChange={e=>setModal({...modal,name:e.target.value})} autoFocus/>
+            <input className="modal-input" placeholder="Beschreibung (optional)" value={modal.desc}
+              onChange={e=>setModal({...modal,desc:e.target.value})}/>
+            <div className="modal-row">
+              <button className="modal-ok" onClick={()=>addErfolg(modal.name,modal.desc)}>Hinzufügen</button>
+              <button className="modal-x" onClick={()=>setModal(null)}>Abbrechen</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
       <div className="hdr">
         <div className="inner">
           <div className="hdr-row">
@@ -291,22 +341,20 @@ function App() {
             </div>
           </div>
           <div className="bar-row">
-            <span>{totalBar.cur} / {totalBar.needed} XP</span>
+            <span>{totalBar.cur.toLocaleString("de-DE")} / {totalBar.needed.toLocaleString("de-DE")} XP</span>
             <span>→ Stufe {pad2(Math.min(totalLvl+1,10))}</span>
           </div>
-          <div className="bar-wrap">
-            <div className="bar-fill" style={{width:`${totalBar.pct}%`,background:"#9d7e4a"}}/>
-          </div>
+          <div className="bar-wrap"><div className="bar-fill" style={{width:`${totalBar.pct}%`,background:"#d9a758"}}/></div>
           <div className="sync-row">
             <div className={`sync-dot ${isStale?"stale":""}`}/>
-            <span>{data.synced_at ? `Notion-Sync: ${fmtDate(data.synced_at)}` : "Notion-Sync: noch nicht konfiguriert"}</span>
+            <span>{data.synced_at?`Notion-Sync: ${fmtSync(data.synced_at)}`:"Notion-Sync: noch nicht konfiguriert"}</span>
           </div>
         </div>
       </div>
 
       <div className="inner">
         <div className="tabs">
-          {[["fortschritt","Fortschritt"],["erfolge",`Erfolge (${unlocked}/${ERFOLGE.length})`],["meilensteine","Meilensteine"],["verlauf","Verlauf"]].map(([id,lbl])=>(
+          {[["fortschritt","Fortschritt"],["erfolge",`Erfolge (${doneCount}/${data.erfolge.length})`],["meilensteine","Meilensteine"],["verlauf","Verlauf"]].map(([id,lbl])=>(
             <button key={id} className={`tab ${tab===id?"on":"off"}`} onClick={()=>setTab(id)}>{lbl}</button>
           ))}
         </div>
@@ -314,9 +362,9 @@ function App() {
         {/* FORTSCHRITT */}
         {tab==="fortschritt" && (
           <div style={{paddingTop:4}}>
-            {Object.entries(SKILLS).map(([key,sk]) => {
-              const skillXP=xp[key], lvl=getLvl(skillXP), bar=getBar(skillXP), open=picking===key;
-              const synced=data.synced_xp[key], manual=data.manual_xp[key];
+            {Object.entries(SKILLS).map(([key,sk])=>{
+              const sx=xp[key]||0, lvl=getLvl(sx), bar=getBar(sx), open=picking===key;
+              const synced=data.synced_xp[key]||0, manual=data.manual_xp[key]||0;
               return (
                 <div key={key} className="sk-card">
                   <div className="sk-top">
@@ -327,66 +375,70 @@ function App() {
                     </div>
                     <div className="sk-right">
                       <div className="sk-lvl" style={{color:sk.color}}>{pad2(lvl)}</div>
-                      <div className="sk-xp">{skillXP.toLocaleString("de-DE")} XP</div>
+                      <div className="sk-xp">{sx.toLocaleString("de-DE")} XP</div>
                     </div>
                   </div>
                   <div className="bar-wrap"><div className="bar-fill" style={{width:`${bar.pct}%`,background:sk.color}}/></div>
-                  <div className="bar-lbl"><span>{bar.cur} / {bar.needed} XP bis Stufe {pad2(Math.min(lvl+1,10))}</span><span>{bar.pct}%</span></div>
+                  <div className="bar-lbl">
+                    <span>{bar.cur.toLocaleString("de-DE")} / {bar.needed.toLocaleString("de-DE")} XP bis Stufe {pad2(Math.min(lvl+1,10))}</span>
+                    <span>{bar.pct}%</span>
+                  </div>
                   {open ? (
                     <div>
-                      <div className="notion-note">Notion-Aufgaben werden täglich automatisch synchronisiert. Hier nur Aktivitäten außerhalb von Notion eintragen.</div>
+                      <div className="notion-note">Notion-Aufgaben werden täglich automatisch gezählt. Hier nur Aktivitäten außerhalb von Notion eintragen.</div>
                       <div className="p-opts">
-                        {SCHWIERIGKEIT.map((s,i)=>(
-                          <button key={i} className="p-opt" onClick={()=>setPreset(i)} style={{borderColor:preset===i?sk.color:"rgba(255,248,230,.1)",background:preset===i?`${sk.color}18`:"none",color:preset===i?sk.color:"rgba(237,232,224,.38)"}}>
-                            {s.label} +{s.xp}
-                          </button>
+                        {data.schwierigkeit.map((s,i)=>(
+                          <button key={i} className="p-opt" onClick={()=>setPreset(i)} style={{
+                            borderColor:preset===i?sk.color:"rgba(255,255,255,.14)",
+                            background:preset===i?`${sk.color}26`:"none",
+                            color:preset===i?sk.color:"#b0b0b0",
+                          }}>{s.label} +{s.xp}</button>
                         ))}
                       </div>
-                      <div className="p-note">{SCHWIERIGKEIT[preset].note}</div>
                       <div className="p-row">
-                        <button className="btn-ok" style={{background:sk.color,color:"#0f0e0c"}} onClick={()=>gainManualXP(key,SCHWIERIGKEIT[preset].xp,SCHWIERIGKEIT[preset].label)}>
-                          +{SCHWIERIGKEIT[preset].xp} XP eintragen
+                        <button className="btn-ok" style={{background:sk.color,color:"#191919"}}
+                          onClick={()=>gainManualXP(key,data.schwierigkeit[preset].xp,data.schwierigkeit[preset].label)}>
+                          +{data.schwierigkeit[preset].xp} XP eintragen
                         </button>
                         <button className="btn-x" onClick={()=>setPicking(null)}>Abbrechen</button>
                       </div>
                     </div>
                   ) : (
-                    <button className="btn-add" onClick={()=>{setPicking(key);setPreset(1);}}>Manueller XP-Eintrag (außerhalb Notion)</button>
+                    <button className="btn-add" onClick={()=>{setPicking(key);setPreset(1);}}>Manueller XP-Eintrag</button>
                   )}
                 </div>
               );
             })}
-            {!data.synced_at && (
-              <div className="setup-box">
-                <strong style={{color:"rgba(237,232,224,.6)"}}>Notion-Sync einrichten:</strong> Notion-Integration anlegen → GitHub Secret setzen → Workflow starten.<br/>
-                Danach werden abgehakte Aufgaben täglich automatisch als XP gezählt. Anleitung: SETUP.md im Repository.
-              </div>
-            )}
           </div>
         )}
 
         {/* ERFOLGE */}
         {tab==="erfolge" && (
           <div className="eg-grid">
-            {ERFOLGE.map(e => {
-              const done=!!(data.erfolge||{})[e.id];
+            {data.erfolge.map(e=>{
+              const done=!!e.done;
               return (
-                <div key={e.id} className={`eg-card ${done?"on":"off"}`} onClick={()=>!done&&unlockErfolg(e.id)}>
-                  <div className="eg-name" style={{color:done?"#c4a055":"rgba(237,232,224,.55)"}}>{e.name}</div>
+                <div key={e.id} className={`eg-card ${done?"on":"off"}`}>
+                  <button className="eg-del" onClick={()=>delErfolg(e.id)}>×</button>
+                  <div className="eg-name" style={{color:done?"#e0b968":"#c4c4c4"}}>{e.name}</div>
                   <div className="eg-desc">{e.desc}</div>
-                  {done ? <div className="eg-date">Erreicht {(data.erfolge||{})[e.id]}</div>
-                        : <div className="eg-hint">Klick zum Markieren</div>}
+                  {done
+                    ? <div className="eg-date" onClick={()=>toggleErfolg(e.id)} style={{cursor:"pointer"}}>Erreicht {e.done}</div>
+                    : <div className="eg-hint" onClick={()=>toggleErfolg(e.id)}>Klick zum Markieren</div>}
                 </div>
               );
             })}
+            <button className="add-erfolg" onClick={()=>setModal({name:"",desc:""})}>+ Erfolg hinzufügen</button>
           </div>
         )}
 
         {/* MEILENSTEINE */}
         {tab==="meilensteine" && (
           <div className="ms-sec">
-            {Object.entries(SKILLS).map(([key,sk]) => {
-              const ms=data.meilensteine[key], done=ms.filter(m=>m.done).length, pct=Math.round((done/ms.length)*100);
+            {Object.entries(SKILLS).map(([key,sk])=>{
+              const ms=data.meilensteine[key]||[];
+              const done=ms.filter(m=>m.done).length;
+              const pct=ms.length?Math.round((done/ms.length)*100):0;
               return (
                 <div key={key}>
                   <div className="ms-hdr">
@@ -394,13 +446,25 @@ function App() {
                     <span className="ms-prog" style={{color:sk.color}}>{done} / {ms.length}</span>
                   </div>
                   <div className="ms-bar"><div className="ms-bfill" style={{width:`${pct}%`,background:sk.color}}/></div>
-                  {ms.map(m => (
-                    <div key={m.id} className="ms-item" onClick={()=>toggleMS(key,m.id)}>
-                      <div className="ms-chk" style={{border:`1.5px solid ${m.done?sk.color:"rgba(255,248,230,.12)"}`,background:m.done?sk.color:"none",color:"#0f0e0c"}}>{m.done?"✓":""}</div>
-                      <span className="ms-txt" style={{color:m.done?"rgba(237,232,224,.28)":"rgba(237,232,224,.82)",textDecoration:m.done?"line-through":"none"}}>{m.text}</span>
-                      {!m.done && <span className="ms-xp">+30</span>}
+                  {ms.map(m=>(
+                    <div key={m.id} className="ms-item">
+                      <div className="ms-chk" onClick={()=>toggleMS(key,m.id)} style={{
+                        border:`1.5px solid ${m.done?sk.color:"rgba(255,255,255,.18)"}`,
+                        background:m.done?sk.color:"none",color:"#191919",
+                      }}>{m.done?"✓":""}</div>
+                      <span className="ms-txt" onClick={()=>toggleMS(key,m.id)} style={{
+                        color:m.done?"#7d7d7d":"#dcdcdc",textDecoration:m.done?"line-through":"none",
+                      }}>{m.text}</span>
+                      <button className="ms-del" onClick={()=>delMS(key,m.id)}>×</button>
                     </div>
                   ))}
+                  <div className="ms-add">
+                    <input className="ms-input" placeholder="Neuer Meilenstein…"
+                      value={msInput[key]||""}
+                      onChange={e=>setMsInput(s=>({...s,[key]:e.target.value}))}
+                      onKeyDown={e=>{if(e.key==="Enter")addMS(key);}}/>
+                    <button className="ms-addbtn" onClick={()=>addMS(key)}>+</button>
+                  </div>
                   <div className="ms-gap"/>
                 </div>
               );
@@ -411,15 +475,15 @@ function App() {
         {/* VERLAUF */}
         {tab==="verlauf" && (
           <div className="lg-sec">
-            {(!data.log||data.log.length===0) ? (
+            {(!data.log||data.log.length===0)?(
               <div className="lg-empty">Noch keine Einträge.</div>
-            ) : (
+            ):(
               <>
                 {data.log.map((e,i)=>{
                   const sk=SKILLS[e.skill];
                   return (
                     <div key={i} className="lg-item">
-                      <div className="lg-badge" style={{background:`${sk?.color}20`,color:sk?.color}}>{sk?.abbr}</div>
+                      <div className="lg-badge" style={{background:`${sk?.color}26`,color:sk?.color}}>{sk?.abbr}</div>
                       <div style={{flex:1}}>
                         <div className="lg-note">{e.note||sk?.label}</div>
                         <div className="lg-src">{e.src==="notion"?"via Notion":"manuell"}</div>
@@ -439,7 +503,7 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
