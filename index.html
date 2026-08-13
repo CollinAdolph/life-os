@@ -1,509 +1,1236 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fortschritt · Collin</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wegmarken — Collins Ziele</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #191919; font-family: 'Inter', system-ui; }
-  #root { min-height: 100vh; }
+  :root{
+    --paper:#EEF1F3;
+    --card:#FFFFFF;
+    --ink:#16232E;
+    --ink-2:#3E5061;
+    --muted:#75879A;
+    --faint:#A8B6C4;
+    --rule:#DCE3E9;
+    --rule-soft:#E9EEF2;
+    --accent:#3B6FD4;
+    --ok:#16A379;
+    --warn:#D9822B;
+    --alert:#D14D5C;
+    --chart-grid:#EDF1F4;
+    --chart-grid-strong:#D3DCE3;
+    --track:#EBF0F4;
+    --note-bg:#F5F8FA;
+    --field-bg:#F7FAFB;
+    --hover:#E4E9ED;
+    --today-fill:#16232E;
+    --r:16px;
+  }
+  /* Dark-Mode — auf Notions dunklen Hintergrund (#191919) abgestimmt */
+  html[data-theme="dark"]{
+    --paper:#191919;
+    --card:#242424;
+    --ink:#EDEDED;
+    --ink-2:#C4C4C4;
+    --muted:#9B9B9B;
+    --faint:#6E6E6E;
+    --rule:#383838;
+    --rule-soft:#2E2E2E;
+    --accent:#5B8FC9;
+    --ok:#4FB894;
+    --warn:#E0A24E;
+    --alert:#D97A70;
+    --chart-grid:#2E2E2E;
+    --chart-grid-strong:#3E3E3E;
+    --track:#333333;
+    --note-bg:#2A2A2A;
+    --field-bg:#1F1F1F;
+    --hover:#2E2E2E;
+    --today-fill:#EDEDED;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .serif{font-family:'Fraunces',Georgia,serif}
+  .lab{
+    font-size:10.5px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)
+  }
+
+  /* ---------------- Shell ---------------- */
+  .shell{display:flex;min-height:100vh}
+  .side{
+    width:238px;flex:none;padding:26px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;
+    border-right:1px solid var(--rule)
+  }
+  .mark{padding:0 8px 6px}
+  .mark .kick{font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+  .mark h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;margin:6px 0 3px;line-height:1.1}
+  .mark .who{font-size:12px;color:var(--muted)}
+
+  nav{margin-top:24px;display:flex;flex-direction:column;gap:2px}
+  .nv{
+    display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;
+    font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;border:0;background:none;
+    font-family:'Inter',sans-serif;text-align:left;width:100%;transition:background .14s ease,color .14s ease
+  }
+  .nv .dt{width:8px;height:8px;border-radius:50%;flex:none;background:var(--faint)}
+  .nv .n{flex:1}
+  .nv .k{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .nv:hover{background:var(--hover);color:var(--ink)}
+  .nv.on{background:var(--ink);color:#fff}
+  .nv.on .k{color:rgba(255,255,255,.6)}
+  .nv.sub{padding-left:26px;font-size:13.5px}
+  .nv .caret{font-size:10px;color:var(--faint);transition:transform .16s ease}
+  .nv.open .caret{transform:rotate(90deg)}
+  .side .tools{margin-top:26px;padding-top:18px;border-top:1px solid var(--rule);display:flex;flex-direction:column;gap:8px}
+
+  .main{flex:1;min-width:0;padding:38px 40px 90px}
+  .inner{max-width:1000px;margin:0 auto}
+
+  /* ---------------- Buttons ---------------- */
+  .btn{
+    background:var(--card);border:1px solid var(--rule);color:var(--ink);
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:10px;
+    cursor:pointer;transition:all .14s ease;display:inline-flex;align-items:center;gap:7px
+  }
+  .btn:hover{border-color:var(--faint);background:var(--card)}
+  .btn.sm{padding:6px 11px;font-size:12.5px}
+  .btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.dark:hover{background:#22323f}
+  .btn.plain{background:transparent;border-color:transparent;color:var(--muted)}
+  .btn.plain:hover{color:var(--ink);background:var(--hover)}
+  .btn.block{width:100%;justify-content:center}
+  .btn.danger{color:var(--alert);border-color:color-mix(in srgb,var(--alert) 40%,transparent)}
+  .btn.danger:hover{background:color-mix(in srgb,var(--alert) 12%,transparent);border-color:var(--alert)}
+
+  /* ---------------- Hero ---------------- */
+  .hero{margin-bottom:34px}
+  .hero .eyebrow{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .hero .eyebrow .dt{width:9px;height:9px;border-radius:50%}
+  .hero h2{
+    font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:40px;line-height:1.16;
+    margin:0;letter-spacing:-.015em;max-width:20ch
+  }
+  .hero h2 em{font-style:normal;font-weight:600;color:var(--hc,var(--accent))}
+  .hero .under{margin-top:14px;font-size:14.5px;color:var(--ink-2);max-width:60ch;line-height:1.6}
+  .hero .actions{margin-top:20px;display:flex;gap:9px;flex-wrap:wrap}
+
+  /* ---------------- Metric strip ---------------- */
+  .strip{display:flex;flex-wrap:wrap;gap:0;background:var(--card);border:1px solid var(--rule);
+    border-radius:var(--r);overflow:hidden;margin-bottom:34px}
+  .strip .m{flex:1;min-width:150px;padding:18px 20px;border-right:1px solid var(--rule-soft)}
+  .strip .m:last-child{border-right:0}
+  .strip .m .v{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:30px;line-height:1;
+    letter-spacing:-.02em;margin:8px 0 5px;font-variant-numeric:tabular-nums}
+  .strip .m .v small{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0}
+  .strip .m .s{font-size:12.5px;color:var(--muted);line-height:1.4}
+  .strip .m .s b{color:var(--ink);font-weight:600}
+
+  /* ---------------- Section ---------------- */
+  .sec{margin-bottom:38px}
+  .sh{display:flex;align-items:center;gap:14px;margin-bottom:15px}
+  .sh h3{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;margin:0;letter-spacing:-.01em}
+  .sh .ln{flex:1;height:1px;background:var(--rule)}
+  .seg{display:inline-flex;border:1px solid var(--rule);border-radius:9px;overflow:hidden;background:var(--card)}
+  .seg button{background:none;border:0;color:var(--muted);font-size:12px;padding:6px 11px;cursor:pointer;
+    font-family:'Inter',sans-serif}
+  .seg button+button{border-left:1px solid var(--rule)}
+  .seg button.on{background:var(--ink);color:#fff}
+
+  /* ---------------- Next steps ---------------- */
+  .steps{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:6px 20px}
+  .steps .row{display:flex;align-items:flex-start;gap:13px;padding:14px 0;border-bottom:1px solid var(--rule-soft)}
+  .steps .row:last-child{border-bottom:0}
+  .box{width:19px;height:19px;border-radius:6px;border:1.6px solid var(--faint);flex:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;margin-top:1px;
+    transition:all .14s ease;background:transparent}
+  .box:hover{border-color:var(--ink)}
+  .row.done .box{background:var(--ok);border-color:var(--ok)}
+  .row .tx{flex:1;font-size:14.5px;line-height:1.45}
+  .row.done .tx{color:var(--faint);text-decoration:line-through}
+  .row .tx .cad{display:block;font-size:12px;color:var(--muted);margin-top:3px;text-decoration:none}
+  .row .x{background:none;border:0;color:var(--faint);cursor:pointer;font-size:15px;padding:2px 4px;line-height:1}
+  .row .x:hover{color:var(--alert)}
+  .steps .addrow{padding:13px 0;border-top:1px solid var(--rule-soft)}
+  .steps .addrow input{width:100%;border:0;outline:none;font-family:'Inter',sans-serif;font-size:14px;
+    background:transparent;color:var(--ink)}
+  .steps .addrow input::placeholder{color:var(--faint)}
+
+  /* ---------------- Timeline ---------------- */
+  .tl{display:flex;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+  .gut{flex:none;width:132px;border-right:1px solid var(--rule);z-index:3;background:var(--card)}
+  .gut .ga{height:42px;border-bottom:1px solid var(--rule-soft)}
+  .gut .gl{height:92px;display:flex;flex-direction:column;justify-content:center;padding:0 14px;
+    border-bottom:1px solid var(--rule-soft)}
+  .gut .gl:last-child{border-bottom:0}
+  .gl .gn{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+  .gl .gn .dt{width:8px;height:8px;border-radius:50%}
+  .gl .gm{font-size:11px;color:var(--faint);margin-top:3px}
+  .brd{flex:1;overflow-x:auto;overflow-y:hidden;position:relative}
+  .bin{position:relative}
+  .brd svg{position:absolute;top:0;left:0;display:block}
+  .lay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+  .nd{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;width:0}
+  .nd .dt{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;
+    cursor:pointer;border:2.5px solid var(--card);background:var(--tc);box-shadow:0 0 0 1px var(--tc);
+    transition:transform .15s ease;padding:0}
+  .nd.major .dt{width:19px;height:19px}
+  .nd.planned .dt{background:var(--card);box-shadow:0 0 0 1.8px var(--tc)}
+  .nd.progress .dt{background:var(--tc);box-shadow:0 0 0 4px color-mix(in srgb,var(--tc) 22%,transparent)}
+  .nd.done .dt::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:9px;color:#fff;font-weight:700}
+  .nd.major.done .dt::after{font-size:11px}
+  .nd.due .dt{background:var(--card);box-shadow:0 0 0 1.8px var(--alert)}
+  .nd.start .dt{width:10px;height:10px;background:var(--faint);box-shadow:0 0 0 1px var(--faint)}
+  .nd .dt:hover{transform:translate(-50%,-50%) scale(1.28)}
+  .nd .dt:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  .nd .lb{position:absolute;left:11px;width:146px;font-size:11.5px;line-height:1.3;color:var(--ink-2);cursor:pointer;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .nd .lb .dd{display:block;font-size:10px;color:var(--faint);margin-bottom:2px;font-variant-numeric:tabular-nums}
+  .nd.above .lb{bottom:11px}
+  .nd.below .lb{top:11px}
+  .nd.dim .lb{color:var(--faint)}
+  .nd .lb:hover{color:var(--ink)}
+  .axl{font-size:10px;fill:var(--faint)}
+  .axy{font-size:11.5px;font-weight:600;fill:var(--ink-2)}
+  .kvl{font-size:9.5px;font-weight:600;letter-spacing:.06em}
+
+  /* ---------------- Cards / charts ---------------- */
+  .grid{display:grid;gap:14px}
+  .grid.two{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:20px}
+  .card h4{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15.5px;margin:0 0 3px}
+  .card .cs{font-size:12.5px;color:var(--muted);margin-bottom:16px}
+  .cax{font-size:9.5px;fill:var(--faint)}
+  .cnum{font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+  .lg{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:10px}
+  .lg span{display:inline-flex;align-items:center;gap:6px}
+  .lg i{width:16px;height:0;border-top:2px solid;display:inline-block}
+  .lg i.d{border-top-style:dashed}
+
+  .pb{margin-bottom:16px}
+  .pb .pl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:7px}
+  .pb .pl .pv{color:var(--muted);font-variant-numeric:tabular-nums}
+  .pb .tr{height:8px;background:var(--track);border-radius:99px;position:relative;overflow:hidden}
+  .pb .fl{height:100%;border-radius:99px;background:var(--pc)}
+  .pb .tk{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.45}
+
+  .lst{list-style:none;margin:0;padding:0}
+  .lst li{display:flex;gap:13px;padding:10px 0;border-bottom:1px solid var(--rule-soft);font-size:13.5px;line-height:1.5}
+  .lst li:last-child{border-bottom:0}
+  .lst li .k{color:var(--faint);flex:none;width:76px;font-size:12px;padding-top:1px}
+  .note{background:var(--note-bg);border:1px solid var(--rule-soft);border-radius:11px;padding:13px 15px;
+    font-size:13px;color:var(--ink-2);line-height:1.55}
+  .note b{color:var(--ink)}
+  .quote{border-left:3px solid var(--qc,var(--accent));padding:4px 0 4px 16px;margin:0 0 18px;
+    font-family:'Fraunces',Georgia,serif;font-size:15px;line-height:1.5;color:var(--ink)}
+  .empty{border:1px dashed var(--rule);border-radius:12px;padding:26px;text-align:center;color:var(--muted);font-size:13.5px}
+
+  /* folder page */
+  .folder{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .fc{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:18px;cursor:pointer;
+    text-align:left;font-family:'Inter',sans-serif;transition:all .14s ease;position:relative;overflow:hidden}
+  .fc::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fc)}
+  .fc:hover{border-color:var(--faint);transform:translateY(-1px)}
+  .fc .fn{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:16.5px;margin-bottom:7px}
+  .fc .fm{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .fc .fm b{color:var(--ink);font-weight:600}
+
+  /* ---------------- Drawer / modal ---------------- */
+  .dw{position:fixed;top:0;right:0;height:100%;width:min(390px,93vw);z-index:60;background:var(--card);
+    border-left:1px solid var(--rule);box-shadow:-20px 0 50px rgba(22,35,46,.10);transform:translateX(105%);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding:26px}
+  .dw.open{transform:translateX(0)}
+  .dw .tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:5px 11px;
+    border-radius:999px;align-self:flex-start;border:1px solid var(--rule)}
+  .dw .tag .dt{width:8px;height:8px;border-radius:50%}
+  .dw .dd{font-size:12.5px;color:var(--muted);margin:18px 0 7px;font-variant-numeric:tabular-nums}
+  .dw h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;line-height:1.24;margin:0 0 16px}
+  .dw .mtx{font-size:14px;line-height:1.6;white-space:pre-wrap;background:var(--note-bg);border:1px solid var(--rule-soft);
+    border-radius:11px;padding:14px 16px;color:var(--ink-2)}
+  .srow{display:flex;gap:8px;margin-top:20px}
+  .srow button{flex:1;padding:9px;border-radius:9px;border:1px solid var(--rule);background:var(--card);
+    color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+  .srow button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .dw .acts{margin-top:auto;display:flex;gap:10px;padding-top:22px}
+  .dw .acts .btn{flex:1;justify-content:center}
+  .dw .cl{position:absolute;top:18px;right:18px;background:none;border:0;color:var(--faint);font-size:21px;
+    cursor:pointer;line-height:1;padding:4px}
+  .dw .cl:hover{color:var(--ink)}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:70;display:none;align-items:center;
+    justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+  .ov.open{display:flex}
+  .md{background:var(--card);border:1px solid var(--rule);border-radius:18px;width:min(470px,100%);padding:28px;
+    max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(22,35,46,.16)}
+  .md h3{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:20px;margin:0 0 20px}
+  .fd{margin-bottom:16px}
+  .fd label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px}
+  .fd input,.fd select,.fd textarea{width:100%;background:var(--field-bg);border:1px solid var(--rule);border-radius:10px;
+    color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;outline:none}
+  .fd input:focus,.fd select:focus,.fd textarea:focus{border-color:var(--accent);background:var(--card)}
+  .fd textarea{resize:vertical;min-height:74px}
+  .fd.row{display:flex;gap:12px}.fd.row>div{flex:1}
+  .crow{display:flex;gap:8px;flex-wrap:wrap}
+  .cs2{width:30px;height:30px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+  .cs2.on{border-color:var(--ink)}
+  .mact{display:flex;gap:10px;margin-top:24px}.mact .btn{flex:1;justify-content:center}
+
+  /* ---------------- XP / Level ---------------- */
+  .xpwrap{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:22px 24px;margin-bottom:34px}
+  .xphead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+  .xphead .xt{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:600}
+  .xphead .xs{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .xptot{text-align:right}
+  .xptot .lv{font-family:'Fraunces',Georgia,serif;font-size:34px;font-weight:600;line-height:1;letter-spacing:-.02em}
+  .xptot .st{font-size:11px;color:var(--muted);margin-top:2px}
+  .xptot .lb{font-size:9.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .xpgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+  .xpc{padding:0}
+  .xpc .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .xpc .nm{font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px}
+  .xpc .nm .dt{width:8px;height:8px;border-radius:50%;flex:none}
+  .xpc .lv{font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+  .xpc .tr{height:5px;background:var(--track);border-radius:99px;overflow:hidden}
+  .xpc .fl{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+  .xpc .sub{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+  .xpsync{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);margin-top:18px;padding-top:16px;border-top:1px solid var(--rule-soft)}
+  .xpsync .d{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+  .xpsync .d.stale{background:var(--faint)}
+
+  @media (max-width:860px){
+    .shell{flex-direction:column}
+    .side{width:100%;height:auto;position:static;border-right:0;border-bottom:1px solid var(--rule);padding:18px}
+    nav{flex-direction:row;flex-wrap:wrap;margin-top:16px}
+    .nv{width:auto}
+    .nv.sub{padding-left:11px}
+    .side .tools{flex-direction:row;flex-wrap:wrap}
+    .side .tools .btn{flex:1}
+    .main{padding:26px 18px 70px}
+    .hero h2{font-size:29px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone@7.24.4/babel.min.js"></script>
 </head>
 <body>
-<div id="root">
-  <div style="background:#191919;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#999;font-family:Inter,system-ui;font-size:12px;">Wird geladen…</div>
+<script>
+  (function(){
+    var saved=null;
+    try{saved=localStorage.getItem("wegmarken-theme");}catch(e){}
+    var dark = saved ? saved==="dark" : (window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches);
+    document.documentElement.setAttribute("data-theme",dark?"dark":"light");
+  })();
+</script>
+<div class="shell">
+  <aside class="side">
+    <div class="mark">
+      <div class="kick">Ziele</div>
+      <h1>Wegmarken</h1>
+      <div class="who">Collin · Mannheim &amp; Peking</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="tools">
+      <button class="btn sm block dark" id="bAdd">Meilenstein hinzufügen</button>
+      <button class="btn sm block" id="bUp">Wochen-Update</button>
+      <button class="btn sm block plain" id="bData">Daten &amp; Backup</button>
+      <button class="btn sm block plain" id="bTheme">◐ Hell / Dunkel</button>
+    </div>
+  </aside>
+  <main class="main"><div class="inner" id="view"></div></main>
 </div>
 
-<script type="text/babel">
-const { useState, useEffect } = React;
+<div class="dw" id="dw"><button class="cl" id="dwClose" aria-label="Schließen">✕</button><div id="dwBody"></div></div>
+<div class="ov" id="ov"><div class="md" id="md"></div></div>
 
-// ─── Konfiguration ──────────────────────────────────────────────────────────
-const STORAGE_KEY   = "life-os-v4";
-const NOTION_XP_URL = "./notion-xp.json";
+<script>
+"use strict";
 
-const SKILLS = {
-  chinese: { label: "Chinesisch",      abbr: "ZH", color: "#68a672" },
-  sport:   { label: "Sport & Körper",  abbr: "SP", color: "#b08948" },
-  school:  { label: "Schule & Abitur", abbr: "SC", color: "#5b8fc9" },
-  neben:   { label: "Nebenprojekte",   abbr: "NP", color: "#b56bb0" },
-};
+/* ============ STORAGE ============ */
+const KEY="wegmarken_v3";
+async function load(){
+  try{if(window.storage&&window.storage.get){const r=await window.storage.get(KEY);return r&&r.value?JSON.parse(r.value):null;}}catch(e){}
+  try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null;}catch(e){return null;}
+}
+async function save(o){const s=JSON.stringify(o);
+  try{if(window.storage&&window.storage.set){await window.storage.set(KEY,s);return;}}catch(e){}
+  try{localStorage.setItem(KEY,s);}catch(e){}}
 
-// Neu kalibrierte Skala — deutlich höhere Schwellen, mehr Raum nach oben
-const THRESHOLDS = [0, 500, 1200, 2200, 3600, 5500, 8000, 11000, 15000, 20000, 26000];
-const STUFEN = [
-  "Anfang","Aufbau","Solide","Fortgeschritten","Kompetent",
-  "Stark","Fortgeschritten+","Sehr stark","Exzellent","Meisterhaft",
-];
+/* ============ DATES ============ */
+const TODAY=new Date(2026,7,5,12);
+const MO=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+function d(s){const[y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd,12);}
+function diff(a,b){return Math.round((a-b)/86400000);}
+function fmt(x){return x.toLocaleDateString("de-DE",{day:"2-digit",month:"short",year:"numeric"});}
+function iso(){const p=n=>String(n).padStart(2,"0");return `${TODAY.getFullYear()}-${p(TODAY.getMonth()+1)}-${p(TODAY.getDate())}`;}
+function nf(n){return n.toLocaleString("de-DE");}
+const PAL=["#D6455C","#E08A2E","#3B6FD4","#16A379","#7C5BD9","#0F9BB5","#C2544E","#5B8C3A","#B8863B","#4A6FA5"];
+/* Theme-aware CSS-Variablen-Lookup für SVG-Rendering */
+function cssv(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+function THEME(){return {
+  grid:cssv("--chart-grid")||"#EDF1F4",
+  gridStrong:cssv("--chart-grid-strong")||"#D3DCE3",
+  today:cssv("--today-fill")||"#16232E",
+  card:cssv("--card")||"#fff",
+  ink:cssv("--ink")||"#16232E",
+};}
 
-const DEFAULT_SCHWIERIGKEIT = [
-  { label:"Täglich",     xp:5   },
-  { label:"Standard",    xp:15  },
-  { label:"Komplex",     xp:30  },
-  { label:"Kritisch",    xp:60  },
-  { label:"Meilenstein", xp:100 },
-];
+/* ============ SEED ============ */
+function seed(){return{
+ areas:[
+  {id:"zh",name:"Chinesisch",color:"#C2544E",kind:"area",xpKey:"chinese"},
+  {id:"fit",name:"Sport & Körper",color:"#B8863B",kind:"area",xpKey:"sport"},
+  {id:"schule",name:"Schule & Abitur",color:"#4A6FA5",kind:"folder",xpKey:"school"},
+  {id:"neben",name:"Nebenprojekte",color:"#8A63C4",kind:"folder",xpKey:"neben"},
+ ],
+ subjects:[
+  {id:"mathe",area:"schule",name:"Mathe LK",color:"#4A6FA5",placeholder:true},
+  {id:"chemie",area:"schule",name:"Chemie LK",color:"#3D9AAF",placeholder:true},
+  {id:"erdkunde",area:"schule",name:"Erdkunde",color:"#5B8C3A",placeholder:true},
+  {id:"spanisch",area:"schule",name:"Spanisch (mündl.)",color:"#E08A2E"},
+  {id:"handschrift",area:"neben",name:"Handschrift",color:"#8A63C4"},
+ ],
+ steps:[
+  {id:"s1",area:"zh",text:"Konsolidierung August — nur Reviews, keine neuen Karten",cad:"August",done:false},
+  {id:"s2",area:"zh",text:"Batch 4 — HSK 3 vollständig aktivieren",cad:"KW 36–37",done:false},
+  {id:"s3",area:"zh",text:"Batch 5 — HSK 4 Hochfrequenz-Kern",cad:"KW 38",done:false},
+  {id:"s3b",area:"zh",text:"Konsolidierungswoche KW 39 — 0 neue Karten",cad:"KW 39",done:false},
+  {id:"s4",area:"zh",text:"Batch 6 — Shanghai-Praxis: 扫码 · 买单 · Büro",cad:"KW 40–41",done:false},
+  {id:"s5",area:"zh",text:"Batch 7 (falls Zeit) — weitere Alltagsschicht",cad:"KW 42",done:false},
+  {id:"s2",area:"zh",text:"Täglichen Input-Slot etablieren (10 min)",cad:"täglich",done:false},
+  {id:"s4",subject:"spanisch",text:"Deck 00 Trampas fortführen",cad:"täglich",done:false},
+  {id:"s7",area:"schule",text:"Klausurtermine Q2.1 eintragen",cad:"September",done:false},
+  {id:"s8",area:"fit",text:"Startgewichte für Block 1 festlegen",cad:"vor September",done:false},
+  {id:"s9",subject:"handschrift",text:"Daumen-Position korrigieren (Videoanalyse)",cad:"täglich 10 min",done:false},
+ ],
+ series:[
+  {id:"zh_w",area:"zh",name:"Aktive Wörter",unit:"Wörter",color:"#C2544E",points:[
+   {date:"2026-08-05",value:2520,plan:true},{date:"2026-10-19",value:3800,plan:true},
+   {date:"2027-06-15",value:4300,plan:true},{date:"2027-09-15",value:5000,plan:true},
+   {date:"2026-08-05",value:2520}]},
+ ],
+ checks:[
+  {id:"c1",subject:"spanisch",label:"Vergleiche (más … que)",done:false},
+  {id:"c2",subject:"spanisch",label:"Verbregime (Präpositionen)",done:false},
+  {id:"c3",subject:"spanisch",label:"adverbialer Subjuntivo",done:false},
+  {id:"c4",subject:"spanisch",label:"Zeitenfolge (consecutio)",done:false},
+ ],
+ ms:[
+  {id:"zh0",area:"zh",date:"2026-08-01",title:"Stand heute",metric:"~2.520 aktive Wörter · A2→B1\nHSK 1–3 ~65 % aktiv · HSK 1–4 ~45 % aktiv\nFSRS 90 %, 140 Karten/Woche",status:"done",start:true},
+  {id:"zh1",area:"zh",date:"2026-10-19",title:"Shanghai-Sprint erreicht",metric:"~3.800 aktive Wörter via 4 Batches (3:1-Muster, KW 36–42)\nBatch 4: HSK 3 · Batch 5: HSK 4 · Konsolidierung KW 39 · Batch 6: Shanghai-Praxis · Batch 7: optional\nHSK 1–4 ~76 % aktiv · Gesprächsschicht: 扫码 · 加微信 · 买单 · Selbstvorstellung · Smalltalk",status:"planned",major:true},
+  {id:"zh2",area:"zh",date:"2026-11-20",title:"Shanghai: aufschnappen",metric:"10–15 Ausdrücke pro Tag ins Eigen-Deck (Okt–Dez 2026)",status:"planned"},
+  {id:"zh3",area:"zh",date:"2027-06-15",title:"HSK 4 aktiv + B2",metric:"HSK-4-Lückenliste = 0 (756 Wörter)\nHepsima 70 %+ ohne Untertitel",status:"planned",major:true},
+  {id:"zh4",area:"zh",date:"2027-09-15",title:"HSK 5 Kern · 5.000 Wörter",metric:"Mannheim-Einstufung: Advanced Course",status:"planned"},
+  {id:"zh5",area:"zh",date:"2028-10-15",title:"HSK 6 + BCT (A)",metric:"beide bestanden (Zeugnis)",status:"planned",major:true},
+  {id:"zh6",area:"zh",date:"2029-09-15",title:"C1-Schwelle",metric:"BCT (B) bestanden",status:"planned"},
+  {id:"zh8",area:"zh",date:"2030-09-15",title:"Native-nahe Kompetenz",metric:"Unterricht auf Chinesisch ohne Einschränkung",status:"planned",major:true},
 
-// Realistischer, moderater Startstand → Gesamt ~Stufe 4
-const BASE_XP = { chinese: 1150, sport: 780, school: 1400, neben: 220 };
+  {id:"es0",subject:"spanisch",area:"schule",date:"2026-08-01",title:"Stand heute",metric:"~2.900 Lemmata rezeptiv · produktiv ~40 % (Band 2–3)\n4 Fossilien offen · Schule 14–15 Punkte",status:"done",start:true},
+  {id:"es1",subject:"spanisch",area:"schule",date:"2026-10-29",title:"Reaktiviert + Fossilien getilgt",metric:"M2a >75 % (von 40 %)\nM3 Block D: Subjuntivo 6/6",status:"planned",major:true},
+  {id:"es4",subject:"spanisch",area:"schule",date:"2027-05-10",title:"Mündliches Abitur",metric:"Ziel: 15 Punkte",status:"planned",major:true},
 
-const DEFAULT_ERFOLGE = [
-  { id:"e1",  name:"Erster Eintrag",        desc:"XP erstmals vergeben",                  done:"2026-06-15" },
-  { id:"e2",  name:"Batch abgeschlossen",    desc:"Anki-Batch fertiggestellt",             done:"2026-08-01" },
-  { id:"e3",  name:"1.000 Vokabeln",         desc:"1.000 chinesische Vokabeln aktiv",      done:"2026-07-10" },
-  { id:"e4",  name:"5.000 Vokabeln",         desc:"5.000 chinesische Vokabeln aktiv",      done:"2026-07-28" },
-  { id:"e5",  name:"Wochenreflexion",        desc:"Ersten Wochen-Review abgeschlossen",    done:"2026-08-10" },
-  { id:"e6",  name:"Erstes Gespräch",        desc:"Freies Gespräch auf Chinesisch",        done:"2026-07-15" },
-  { id:"e7",  name:"Klausur bestanden",      desc:"Schriftliche Prüfung mit ≥ 14 Punkten", done:null },
-  { id:"e8",  name:"Block 1 abgeschlossen",  desc:"Powerbuilding-Phase 1 vollständig",     done:null },
-  { id:"e9",  name:"7-Tage-Serie",           desc:"Sieben Tage Praxis ohne Lücke",         done:null },
-  { id:"e10", name:"Shanghai",               desc:"Internship gestartet",                  done:null },
-];
+  {id:"ab0",area:"schule",date:"2026-08-01",title:"Start Q2",metric:"Letztes Jahr vor dem Abi.",status:"done",start:true},
+  {id:"ab1",area:"schule",date:"2026-12-22",title:"Ende Q2.1",metric:"Halbjahresende · Vornoten",status:"planned"},
+  {id:"ab2",area:"schule",date:"2027-04-05",title:"Prüfungsvorbereitung",metric:"5.–9. April: kein Unterricht",status:"planned"},
+  {id:"ab3",area:"schule",date:"2027-04-13",title:"Schriftliche Prüfungen",metric:"Zentralabitur NRW: 13. April – 5. Mai 2027",status:"planned",major:true},
+  {id:"ab4",area:"schule",date:"2027-05-10",title:"Mündliche Prüfung",metric:"4. Fach, ab 10. Mai",status:"planned"},
+  {id:"ab5",area:"schule",date:"2027-07-03",title:"Abitur · Zeugnis",metric:"Zeugnisausgabe · Ziel besser als 1,0",status:"planned",major:true},
 
-const DEFAULT_MEILENSTEINE = {
-  chinese: [
-    {id:"c1", text:"Batch 4 fertigstellen",           done:false},
-    {id:"c2", text:"Batch 5 fertigstellen",           done:false},
-    {id:"c3", text:"Batch 6 fertigstellen",           done:false},
-    {id:"c4", text:"Täglichen Input-Slot etablieren", done:false},
-    {id:"c5", text:"Gesprächspartner finden",         done:false},
-  ],
-  sport: [
-    {id:"s1", text:"Diätphase abschließen",          done:false},
-    {id:"s2", text:"Block 1 · Wochen 1–2",           done:false},
-    {id:"s3", text:"Block 1 · Wochen 3–4",           done:false},
-    {id:"s4", text:"Block 1 · Wochen 5–6 + Deload", done:false},
-  ],
-  school: [
-    {id:"g1", text:"Anki-System Mathe + Chemie aufgebaut", done:true},
-    {id:"g2", text:"Erdkunde-Lernstrategie entwickeln",    done:false},
-    {id:"g3", text:"Erste fünf Übungsklausuren",           done:false},
-    {id:"g4", text:"Klausurdaten eingetragen (September)", done:false},
-  ],
-  neben: [
-    {id:"n1", text:"Handschrift: Daumen-Position korrigieren", done:false},
-    {id:"n2", text:"Handschrift: Drill-Sheets flüssig",        done:false},
-  ],
-};
+  {id:"f0",area:"fit",date:"2026-08-01",title:"Diätphase",metric:"Clean bis Ende August, dann Block 1.",status:"progress",start:true},
+  {id:"f1",area:"fit",date:"2026-09-01",title:"Powerbuilding Block 1 Start",metric:"A/B/C/D-Split · Wave 3×3 → 3×1",status:"planned",major:true},
+  {id:"f2",area:"fit",date:"2026-10-15",title:"Block 1 abgeschlossen",metric:"Kraft in allen Grundübungen gesteigert · Deload",status:"planned"},
 
-const BLANK = {
-  synced_xp: { ...BASE_XP },
-  manual_xp: { chinese:0, sport:0, school:0, neben:0 },
-  synced_at: null,
-  schwierigkeit: DEFAULT_SCHWIERIGKEIT,
-  erfolge: DEFAULT_ERFOLGE,
-  meilensteine: DEFAULT_MEILENSTEINE,
-  log: [
-    {ts:"10.08.2026", skill:"school",  xp:30,  src:"notion", note:"Anki Mathe & Chemie aufgebaut"},
-    {ts:"01.08.2026", skill:"chinese", xp:100, src:"notion", note:"Batch 3 abgeschlossen"},
-  ],
-};
+  {id:"hs0",subject:"handschrift",area:"neben",date:"2026-08-01",title:"Start",metric:"Muscular-Movement-Technik (Palmer Method).",status:"progress",start:true},
+  {id:"hs1",subject:"handschrift",area:"neben",date:"2026-09-15",title:"Grundhaltung sitzt",metric:"Daumen korrigiert · 45–50° · Hypothenar als Gleitfläche",status:"planned",major:true},
+ ],
+ keyLines:[{date:"2026-10-19",label:"SHANGHAI",color:"#8A63C4"},{date:"2027-07-03",label:"ABITUR",color:"#4A6FA5"}],
+ keyZones:[{from:"2027-04-13",to:"2027-05-05",color:"#4A6FA5"}],
+ targets:{abitur:"2027-04-13",shanghai:"2026-10-19"},
+ xp:{base:{chinese:1150,sport:780,school:1400,neben:220},synced:null,syncedAt:null},
+ meta:{lastUpdate:"2026-08-05",lastNote:"Startstand aus den Lernplan-Chats übernommen."},
+}}
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-const getLvl = xp => { let l=1; for(let i=1;i<THRESHOLDS.length;i++) if(xp>=THRESHOLDS[i]) l=i+1; else break; return Math.min(l,10); };
-const getBar = xp => {
-  const l=getLvl(xp); if(l>=10) return {pct:100,cur:xp-THRESHOLDS[9],needed:6000};
-  const s=THRESHOLDS[l-1],e=THRESHOLDS[l]; return {pct:Math.round(((xp-s)/(e-s))*100),cur:xp-s,needed:e-s};
-};
-const addXP  = (a,b) => { const r={}; for(const k in a) r[k]=(a[k]||0)+(b[k]||0); return r; };
-const sumAll = o => Object.values(o).reduce((a,b)=>a+b,0);
-const pad2   = n => String(n).padStart(2,"0");
-const uid    = () => Math.random().toString(36).slice(2,9);
-const fmtSync = iso => iso ? new Date(iso).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : null;
+/* ============ STATE ============ */
+let D=null;
+let R={view:"overview",id:null};   // view: overview | area | subject
+let zoom=1.7, navOpen={schule:true};
 
-const Storage = {
-  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch{ return null; } },
-  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} },
-};
-async function fetchNotionXP(){ try{ const r=await fetch(NOTION_XP_URL,{cache:"no-store"}); return r.ok?await r.json():null; }catch{ return null; } }
+function norm(o){["areas","subjects","steps","series","checks","ms","keyLines","keyZones"].forEach(k=>o[k]=o[k]||[]);
+  o.targets=o.targets||{abitur:"2027-04-13",shanghai:"2026-10-19"};
+  o.xp=o.xp||{base:{chinese:1150,sport:780,school:1400,neben:220},synced:null,syncedAt:null};
+  o.xp.base=o.xp.base||{chinese:1150,sport:780,school:1400,neben:220};
+  o.meta=o.meta||{lastUpdate:null,lastNote:""};return o;}
 
-// ─── CSS · Notion Dark (#191919) ────────────────────────────────────────────
-const css = `
-  .root{background:#191919;min-height:100vh;color:#e6e6e6;font-family:'Inter',system-ui;padding-bottom:56px}
-  .inner{max-width:600px;margin:0 auto;padding:0 20px}
+/* ============ XP-ENGINE ============ */
+const XP_URL="./notion-xp.json";
+const THRESH=[0,500,1200,2200,3600,5500,8000,11000,15000,20000,26000];
+const STUFEN=["Anfang","Aufbau","Solide","Fortgeschritten","Kompetent","Stark","Etabliert","Sehr stark","Exzellent","Meisterhaft"];
+function xpLvl(xp){let l=1;for(let i=1;i<THRESH.length;i++)if(xp>=THRESH[i])l=i+1;else break;return Math.min(l,10);}
+function xpBar(xp){const l=xpLvl(xp);if(l>=10)return{pct:100,cur:xp-THRESH[9],need:6000};
+  const s=THRESH[l-1],e=THRESH[l];return{pct:Math.round(((xp-s)/(e-s))*100),cur:xp-s,need:e-s};}
+function xpFor(key){
+  const base=(D.xp&&D.xp.base&&D.xp.base[key])||0;
+  const sync=(D.xp&&D.xp.synced&&D.xp.synced[key])||0;
+  return sync||base; // synced total already includes base from the sync script
+}
+function xpToast(msg){
+  let t=document.getElementById("xptoast");
+  if(!t){t=document.createElement("div");t.id="xptoast";
+    t.style.cssText="position:fixed;top:0;left:0;right:0;background:var(--card);border-bottom:1px solid var(--accent);color:var(--accent);padding:12px 20px;text-align:center;font-size:13px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .25s;font-family:Inter,sans-serif";
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.transform="translateY(0)";
+  setTimeout(()=>{t.style.transform="translateY(-100%)";},2400);
+}
+async function loadXP(){
+  try{const r=await fetch(XP_URL,{cache:"no-store"});if(!r.ok)return;
+    const j=await r.json();
+    if(j&&j.total_xp){D.xp.synced=j.total_xp;D.xp.syncedAt=j.synced_at;}
+  }catch(e){}
+}
+async function persist(){await save(D);}
 
-  .hdr{background:#191919;border-bottom:1px solid rgba(255,255,255,.09);padding:22px 20px 18px}
-  .hdr-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-  .hdr-name{font-size:20px;font-weight:700;color:#fff}
-  .hdr-sub{font-size:11px;color:#9b9b9b;margin-bottom:14px}
-  .hdr-lvl-wrap{text-align:right}
-  .hdr-lvl-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c99a4e}
-  .hdr-lvl-num{font-size:36px;font-weight:700;color:#d9a758;line-height:1;font-variant-numeric:tabular-nums}
-  .hdr-lvl-ttl{font-size:10px;color:#9b9b9b}
-  .bar-row{display:flex;justify-content:space-between;font-size:10px;color:#8f8f8f;margin-bottom:5px;font-variant-numeric:tabular-nums}
-  .bar-wrap{height:3px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
-  .bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
-  .sync-row{display:flex;align-items:center;gap:5px;font-size:10px;color:#8f8f8f;margin-top:9px}
-  .sync-dot{width:6px;height:6px;border-radius:50%;background:#68a672;flex-shrink:0}
-  .sync-dot.stale{background:#777}
+/* ============ HELPERS ============ */
+function msFor(areaId,subjId){
+  if(subjId)return D.ms.filter(m=>m.subject===subjId);
+  return D.ms.filter(m=>m.area===areaId);
+}
+function nextMs(areaId,subjId){
+  const p=(areaId||subjId)?msFor(areaId,subjId):D.ms;
+  return p.filter(m=>!m.start&&m.status!=="done"&&d(m.date)>=TODAY).sort((a,b)=>d(a.date)-d(b.date))[0]||null;
+}
+function stepsFor(areaId,subjId){
+  return D.steps.filter(s=>subjId?s.subject===subjId:(s.area===areaId&&!s.subject));
+}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
 
-  .tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.09);overflow-x:auto}
-  .tab{padding:11px 13px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;transition:color .15s;margin-bottom:-1px;white-space:nowrap;letter-spacing:.01em}
-  .tab.on{color:#d9a758;border-bottom:2px solid #d9a758}
-  .tab.off{color:#8f8f8f;border-bottom:2px solid transparent}
-  .tab.off:hover{color:#c4c4c4}
-
-  .sk-card{padding:17px 0;border-bottom:1px solid rgba(255,255,255,.07)}
-  .sk-card:last-child{border-bottom:none}
-  .sk-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-  .sk-name{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#c4c4c4;margin-bottom:2px}
-  .sk-sub{font-size:10px;color:#8f8f8f}
-  .sk-detail{font-size:10px;color:#7d7d7d;margin-top:2px;font-variant-numeric:tabular-nums}
-  .sk-right{text-align:right}
-  .sk-lvl{font-size:27px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-  .sk-xp{font-size:10px;color:#9b9b9b;margin-top:2px;font-variant-numeric:tabular-nums}
-  .bar-lbl{display:flex;justify-content:space-between;font-size:10px;color:#8f8f8f;margin:6px 0 11px;font-variant-numeric:tabular-nums}
-
-  .notion-note{font-size:10px;color:#9b9b9b;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:4px;padding:6px 9px;margin-bottom:10px;line-height:1.5}
-  .p-opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
-  .p-opt{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s}
-  .p-row{display:flex;gap:8px}
-  .btn-ok{flex:1;padding:9px;font-size:12px;font-weight:700;border:none;border-radius:5px;cursor:pointer}
-  .btn-x{padding:9px 14px;background:none;border:1px solid rgba(255,255,255,.14);color:#b0b0b0;border-radius:5px;font-size:12px;cursor:pointer}
-  .btn-add{width:100%;padding:8px;background:none;border:1px dashed rgba(255,255,255,.15);color:#9b9b9b;border-radius:5px;font-size:11px;cursor:pointer;font-weight:500;transition:all .15s}
-  .btn-add:hover{border-color:rgba(255,255,255,.28);color:#c4c4c4}
-
-  .eg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:18px}
-  .eg-card{padding:13px;border-radius:6px;transition:all .15s;position:relative}
-  .eg-card.on{background:#242017;border:1px solid rgba(217,167,88,.32)}
-  .eg-card.off{background:#1f1f1f;border:1px solid rgba(255,255,255,.08)}
-  .eg-name{font-size:12px;font-weight:600;margin-bottom:3px}
-  .eg-desc{font-size:10px;color:#9b9b9b;line-height:1.4}
-  .eg-date{font-size:9px;color:#d9a758;margin-top:6px;font-variant-numeric:tabular-nums}
-  .eg-hint{font-size:9px;color:#6f6f6f;margin-top:6px;cursor:pointer}
-  .eg-del{position:absolute;top:8px;right:9px;font-size:13px;color:#6f6f6f;cursor:pointer;line-height:1;background:none;border:none}
-  .eg-del:hover{color:#c96a5f}
-
-  .ms-sec{padding-top:18px}
-  .ms-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
-  .ms-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b8b8b8}
-  .ms-prog{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums}
-  .ms-bar{height:2px;background:rgba(255,255,255,.09);border-radius:99px;margin-bottom:12px;overflow:hidden}
-  .ms-bfill{height:100%;border-radius:99px;transition:width .5s}
-  .ms-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-  .ms-item:last-child{border-bottom:none}
-  .ms-chk{width:16px;height:16px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .15s;cursor:pointer}
-  .ms-txt{font-size:12.5px;flex:1;transition:color .15s;cursor:pointer}
-  .ms-del{font-size:14px;color:#5f5f5f;cursor:pointer;background:none;border:none;padding:0 2px}
-  .ms-del:hover{color:#c96a5f}
-  .ms-add{display:flex;gap:6px;margin-top:8px}
-  .ms-input{flex:1;background:#1f1f1f;border:1px solid rgba(255,255,255,.12);color:#e6e6e6;border-radius:5px;padding:6px 9px;font-size:12px;font-family:inherit}
-  .ms-input:focus{outline:none;border-color:rgba(255,255,255,.3)}
-  .ms-addbtn{padding:6px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#c4c4c4;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer}
-  .ms-gap{height:20px}
-
-  .lg-sec{padding-top:18px}
-  .lg-empty{text-align:center;color:#7d7d7d;font-size:12px;padding:44px 0}
-  .lg-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
-  .lg-badge{width:24px;height:24px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
-  .lg-note{flex:1;color:#c4c4c4}
-  .lg-src{font-size:8px;color:#7d7d7d;margin-top:1px}
-  .lg-date{font-size:10px;color:#8f8f8f;font-variant-numeric:tabular-nums}
-  .lg-xp{font-size:12px;font-weight:700;color:#d9a758;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
-  .lg-clr{font-size:10px;color:#7d7d7d;background:none;border:none;cursor:pointer;float:right;margin-top:12px}
-
-  .toast{position:fixed;top:0;left:0;right:0;background:#242017;border-bottom:1px solid rgba(217,167,88,.35);color:#e0b968;padding:11px 20px;text-align:center;font-size:12px;font-weight:600;z-index:999;transform:translateY(-100%);transition:transform .2s;letter-spacing:.02em}
-  .toast.show{transform:translateY(0)}
-
-  .add-erfolg{grid-column:1/-1;padding:11px;background:none;border:1px dashed rgba(255,255,255,.15);color:#9b9b9b;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500}
-  .add-erfolg:hover{border-color:rgba(255,255,255,.28);color:#c4c4c4}
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
-  .modal{background:#1f1f1f;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:20px;width:100%;max-width:340px}
-  .modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:14px}
-  .modal-input{width:100%;background:#191919;border:1px solid rgba(255,255,255,.14);color:#e6e6e6;border-radius:6px;padding:8px 11px;font-size:13px;font-family:inherit;margin-bottom:10px}
-  .modal-input:focus{outline:none;border-color:rgba(255,255,255,.32)}
-  .modal-row{display:flex;gap:8px;margin-top:6px}
-  .modal-ok{flex:1;padding:9px;background:#d9a758;color:#191919;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
-  .modal-x{padding:9px 16px;background:none;border:1px solid rgba(255,255,255,.14);color:#b0b0b0;border-radius:6px;font-size:12px;cursor:pointer}
-`;
-
-// ─── App ─────────────────────────────────────────────────────────────────────
-function App(){
-  const [data,setData]       = useState(null);
-  const [loading,setLoading] = useState(true);
-  const [tab,setTab]         = useState("fortschritt");
-  const [picking,setPicking] = useState(null);
-  const [preset,setPreset]   = useState(1);
-  const [toast,setToast]     = useState(null);
-  const [msInput,setMsInput] = useState({});
-  const [modal,setModal]     = useState(null); // {name, desc}
-
-  useEffect(()=>{ (async()=>{
-    const saved = Storage.get(STORAGE_KEY);
-    let state = saved ? saved : JSON.parse(JSON.stringify(BLANK));
-    // Migrations-Guard
-    if(!state.synced_xp) state.synced_xp={...BASE_XP};
-    if(!state.manual_xp) state.manual_xp={chinese:0,sport:0,school:0,neben:0};
-    if(state.manual_xp.neben===undefined) state.manual_xp.neben=0;
-    if(state.synced_xp.neben===undefined) state.synced_xp.neben=BASE_XP.neben;
-    if(!state.schwierigkeit) state.schwierigkeit=DEFAULT_SCHWIERIGKEIT;
-    if(!Array.isArray(state.erfolge)) state.erfolge=DEFAULT_ERFOLGE;
-    if(!state.meilensteine) state.meilensteine=DEFAULT_MEILENSTEINE;
-    if(!state.meilensteine.neben) state.meilensteine.neben=DEFAULT_MEILENSTEINE.neben;
-    const notionData = await fetchNotionXP();
-    if(notionData?.total_xp){
-      state.synced_xp = { ...state.synced_xp, ...notionData.total_xp };
-      state.synced_at = notionData.synced_at;
+/* ============ NAV (pure JS, keine Links) ============ */
+function renderNav(){
+  const n=document.getElementById("nav");
+  n.innerHTML="";
+  const mk=(cls,html,fn)=>{const b=document.createElement("button");b.className="nv "+cls;b.innerHTML=html;b.onclick=fn;n.appendChild(b);};
+  mk(R.view==="overview"?"on":"",`<span class="dt" style="background:var(--ink)"></span><span class="n">Übersicht</span>`,()=>go("overview"));
+  D.areas.forEach(a=>{
+    if(a.kind==="folder"){
+      const open=!!navOpen[a.id];
+      mk((R.view==="area"&&R.id===a.id?"on ":"")+(open?"open":""),
+        `<span class="dt" style="background:${a.color}"></span><span class="n">${a.name}</span><span class="caret">▸</span>`,
+        ()=>{navOpen[a.id]=!navOpen[a.id];go("area",a.id);});
+      if(open){
+        D.subjects.filter(s=>s.area===a.id).forEach(s=>{
+          const c=msFor(null,s.id).filter(m=>!m.start).length;
+          mk("sub "+(R.view==="subject"&&R.id===s.id?"on":""),
+            `<span class="dt" style="background:${s.color}"></span><span class="n">${s.name}</span><span class="k">${c}</span>`,
+            ()=>go("subject",s.id));
+        });
+        mk("sub",`<span class="dt" style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--faint)"></span><span class="n" style="color:var(--faint)">Fach hinzufügen</span>`,()=>openSubject(a.id));
+      }
+    }else{
+      const c=D.ms.filter(m=>m.area===a.id&&!m.start).length;
+      mk(R.view==="area"&&R.id===a.id?"on":"",
+        `<span class="dt" style="background:${a.color}"></span><span class="n">${a.name}</span><span class="k">${c}</span>`,
+        ()=>go("area",a.id));
     }
-    setData(state); setLoading(false);
-  })(); },[]);
-
-  useEffect(()=>{ if(data&&!loading) Storage.set(STORAGE_KEY,data); },[data,loading]);
-
-  const notify = m => { setToast(m); setTimeout(()=>setToast(null),2500); };
-
-  const gainManualXP = (skill,amount,reason) => {
-    if(!amount||amount<=0) return;
-    setData(p=>{
-      const manual={...p.manual_xp,[skill]:(p.manual_xp[skill]||0)+amount};
-      const entry={ts:new Date().toLocaleDateString("de-DE"),skill,xp:amount,src:"manual",note:reason};
-      return {...p,manual_xp:manual,log:[entry,...(p.log||[])].slice(0,40)};
-    });
-    notify(`+${amount} XP · ${SKILLS[skill].label}`);
-    setPicking(null);
-  };
-
-  const toggleErfolg = id => setData(p=>({
-    ...p, erfolge:p.erfolge.map(e=>e.id===id?{...e,done:e.done?null:new Date().toISOString().slice(0,10)}:e)
-  }));
-  const delErfolg = id => setData(p=>({...p,erfolge:p.erfolge.filter(e=>e.id!==id)}));
-  const addErfolg = (name,desc) => {
-    if(!name.trim()) return;
-    setData(p=>({...p,erfolge:[...p.erfolge,{id:uid(),name:name.trim(),desc:desc.trim(),done:null}]}));
-    setModal(null); notify("Erfolg hinzugefügt");
-  };
-
-  const toggleMS = (skill,mid) => setData(p=>{
-    const ms=p.meilensteine[skill], wasOpen=!ms.find(m=>m.id===mid)?.done;
-    const newMs={...p.meilensteine,[skill]:ms.map(m=>m.id===mid?{...m,done:!m.done}:m)};
-    if(wasOpen){
-      const manual={...p.manual_xp,[skill]:(p.manual_xp[skill]||0)+30};
-      notify("Meilenstein erreicht — +30 XP");
-      return {...p,meilensteine:newMs,manual_xp:manual};
-    }
-    return {...p,meilensteine:newMs};
   });
-  const delMS = (skill,mid) => setData(p=>({...p,meilensteine:{...p.meilensteine,[skill]:p.meilensteine[skill].filter(m=>m.id!==mid)}}));
-  const addMS = skill => {
-    const text=(msInput[skill]||"").trim(); if(!text) return;
-    setData(p=>({...p,meilensteine:{...p.meilensteine,[skill]:[...p.meilensteine[skill],{id:uid(),text,done:false}]}}));
-    setMsInput(s=>({...s,[skill]:""}));
-  };
+}
+function go(view,id){R={view,id:id||null};render();window.scrollTo(0,0);}
 
-  if(loading||!data) return null;
+/* ============ TIMELINE ============ */
+const LP=30,RP=84,AX=42,LH=92;
+function timeline(mount,lanes,ms,opt){
+  opt=opt||{};const TH=THEME();
+  mount.innerHTML=`<div class="tl"><div class="gut"></div><div class="brd"><div class="bin">
+    <svg xmlns="http://www.w3.org/2000/svg"></svg><div class="lay"></div></div></div></div>`;
+  const gut=mount.querySelector(".gut"),brd=mount.querySelector(".brd"),bin=mount.querySelector(".bin"),
+        svg=mount.querySelector("svg"),lay=mount.querySelector(".lay");
+  if(!ms.length){mount.innerHTML=`<div class="empty">Noch keine Meilensteine. Leg den ersten an.</div>`;return;}
+  let mn=d("2026-08-01").getTime(),mx=TODAY.getTime();
+  ms.forEach(m=>{const t=d(m.date).getTime();if(t<mn)mn=t;if(t>mx)mx=t;});
+  (opt.keyLines||[]).forEach(k=>{const t=d(k.date).getTime();if(t>mx)mx=t;});
+  mx+=70*86400000; const dm={min:new Date(mn),max:new Date(mx)};
+  const X=x=>LP+diff(x,dm.min)*zoom;
+  const W=X(dm.max)+RP,H=AX+lanes.length*LH+4;
+  bin.style.width=W+"px";bin.style.height=H+"px";
+  svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
 
-  const xp       = addXP(data.synced_xp,data.manual_xp);
-  const total    = sumAll(xp);
-  const totalLvl = getLvl(total);
-  const totalBar = getBar(total);
-  const doneCount= data.erfolge.filter(e=>e.done).length;
-  const isStale  = data.synced_at && (Date.now()-new Date(data.synced_at).getTime()>26*3600*1000);
+  let g=`<div class="ga"></div>`;
+  lanes.forEach(l=>{const c=ms.filter(l.match).filter(m=>!m.start).length;
+    g+=`<div class="gl"><div class="gn"><span class="dt" style="background:${l.color}"></span>${l.name}</div>
+      <div class="gm">${c} ${c===1?"Ziel":"Ziele"}</div></div>`;});
+  gut.innerHTML=g;
 
-  return (
-    <div className="root">
-      <style>{css}</style>
-      <div className={`toast ${toast?"show":""}`}>{toast||""}</div>
+  let s="";
+  (opt.keyZones||[]).forEach(z=>{const a=X(d(z.from)),b=X(d(z.to));
+    s+=`<rect x="${a}" y="${AX}" width="${b-a}" height="${H-AX}" fill="${z.color}" opacity="0.06"/>`;});
+  let cur=new Date(dm.min.getFullYear(),dm.min.getMonth(),1,12);
+  const every=zoom>=1.4;
+  while(cur<=dm.max){const x=X(cur),jan=cur.getMonth()===0,q=cur.getMonth()%3===0;
+    if(x>=LP-1){s+=`<line x1="${x}" y1="${AX}" x2="${x}" y2="${H}" stroke="${jan?TH.gridStrong:TH.grid}"/>`;
+      if(every||q)s+=`<text class="axl" x="${x+5}" y="15">${MO[cur.getMonth()]}</text>`;
+      if(jan)s+=`<text class="axy" x="${x+5}" y="32">${cur.getFullYear()}</text>`;}
+    cur.setMonth(cur.getMonth()+1);}
+  lanes.forEach((l,i)=>{const y=AX+i*LH+LH/2;
+    s+=`<line x1="${LP}" y1="${y}" x2="${W-RP+40}" y2="${y}" stroke="${l.color}" stroke-opacity="0.2" stroke-width="1.5"/>`;
+    if(i>0)s+=`<line x1="0" y1="${AX+i*LH}" x2="${W}" y2="${AX+i*LH}" stroke="${TH.grid}"/>`;});
+  (opt.keyLines||[]).forEach(k=>{const x=X(d(k.date));
+    s+=`<line x1="${x}" y1="${AX}" x2="${x}" y2="${H}" stroke="${k.color}" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.5"/>
+      <text class="kvl" x="${x+6}" y="${AX+13}" fill="${k.color}">${k.label}</text>`;});
+  const xt=X(TODAY);
+  s+=`<rect x="0" y="${AX}" width="${xt}" height="${H-AX}" fill="${TH.today}" opacity="0.028"/>
+    <line x1="${xt}" y1="${AX-5}" x2="${xt}" y2="${H}" stroke="${TH.today}" stroke-width="1.6"/>
+    <circle cx="${xt}" cy="${AX-5}" r="3.5" fill="${TH.today}"/>
+    <text class="kvl" x="${xt+7}" y="${AX-6}" fill="${TH.today}">HEUTE</text>`;
+  svg.innerHTML=s;
 
-      {/* Modal für neuen Erfolg */}
-      {modal && (
-        <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)setModal(null);}}>
-          <div className="modal">
-            <div className="modal-title">Neuer Erfolg</div>
-            <input className="modal-input" placeholder="Name" value={modal.name}
-              onChange={e=>setModal({...modal,name:e.target.value})} autoFocus/>
-            <input className="modal-input" placeholder="Beschreibung (optional)" value={modal.desc}
-              onChange={e=>setModal({...modal,desc:e.target.value})}/>
-            <div className="modal-row">
-              <button className="modal-ok" onClick={()=>addErfolg(modal.name,modal.desc)}>Hinzufügen</button>
-              <button className="modal-x" onClick={()=>setModal(null)}>Abbrechen</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="hdr">
-        <div className="inner">
-          <div className="hdr-row">
-            <div>
-              <div className="hdr-name">Collin Adolph</div>
-              <div className="hdr-sub">{STUFEN[totalLvl-1]} · {total.toLocaleString("de-DE")} XP gesamt</div>
-            </div>
-            <div className="hdr-lvl-wrap">
-              <div className="hdr-lvl-lbl">Stufe</div>
-              <div className="hdr-lvl-num">{pad2(totalLvl)}</div>
-              <div className="hdr-lvl-ttl">{STUFEN[totalLvl-1]}</div>
-            </div>
-          </div>
-          <div className="bar-row">
-            <span>{totalBar.cur.toLocaleString("de-DE")} / {totalBar.needed.toLocaleString("de-DE")} XP</span>
-            <span>→ Stufe {pad2(Math.min(totalLvl+1,10))}</span>
-          </div>
-          <div className="bar-wrap"><div className="bar-fill" style={{width:`${totalBar.pct}%`,background:"#d9a758"}}/></div>
-          <div className="sync-row">
-            <div className={`sync-dot ${isStale?"stale":""}`}/>
-            <span>{data.synced_at?`Notion-Sync: ${fmtSync(data.synced_at)}`:"Notion-Sync: noch nicht konfiguriert"}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="inner">
-        <div className="tabs">
-          {[["fortschritt","Fortschritt"],["erfolge",`Erfolge (${doneCount}/${data.erfolge.length})`],["meilensteine","Meilensteine"],["verlauf","Verlauf"]].map(([id,lbl])=>(
-            <button key={id} className={`tab ${tab===id?"on":"off"}`} onClick={()=>setTab(id)}>{lbl}</button>
-          ))}
-        </div>
-
-        {/* FORTSCHRITT */}
-        {tab==="fortschritt" && (
-          <div style={{paddingTop:4}}>
-            {Object.entries(SKILLS).map(([key,sk])=>{
-              const sx=xp[key]||0, lvl=getLvl(sx), bar=getBar(sx), open=picking===key;
-              const synced=data.synced_xp[key]||0, manual=data.manual_xp[key]||0;
-              return (
-                <div key={key} className="sk-card">
-                  <div className="sk-top">
-                    <div>
-                      <div className="sk-name">{sk.label}</div>
-                      <div className="sk-sub">{STUFEN[lvl-1]}</div>
-                      <div className="sk-detail">{synced.toLocaleString("de-DE")} Notion{manual>0?` + ${manual.toLocaleString("de-DE")} manuell`:""}</div>
-                    </div>
-                    <div className="sk-right">
-                      <div className="sk-lvl" style={{color:sk.color}}>{pad2(lvl)}</div>
-                      <div className="sk-xp">{sx.toLocaleString("de-DE")} XP</div>
-                    </div>
-                  </div>
-                  <div className="bar-wrap"><div className="bar-fill" style={{width:`${bar.pct}%`,background:sk.color}}/></div>
-                  <div className="bar-lbl">
-                    <span>{bar.cur.toLocaleString("de-DE")} / {bar.needed.toLocaleString("de-DE")} XP bis Stufe {pad2(Math.min(lvl+1,10))}</span>
-                    <span>{bar.pct}%</span>
-                  </div>
-                  {open ? (
-                    <div>
-                      <div className="notion-note">Notion-Aufgaben werden täglich automatisch gezählt. Hier nur Aktivitäten außerhalb von Notion eintragen.</div>
-                      <div className="p-opts">
-                        {data.schwierigkeit.map((s,i)=>(
-                          <button key={i} className="p-opt" onClick={()=>setPreset(i)} style={{
-                            borderColor:preset===i?sk.color:"rgba(255,255,255,.14)",
-                            background:preset===i?`${sk.color}26`:"none",
-                            color:preset===i?sk.color:"#b0b0b0",
-                          }}>{s.label} +{s.xp}</button>
-                        ))}
-                      </div>
-                      <div className="p-row">
-                        <button className="btn-ok" style={{background:sk.color,color:"#191919"}}
-                          onClick={()=>gainManualXP(key,data.schwierigkeit[preset].xp,data.schwierigkeit[preset].label)}>
-                          +{data.schwierigkeit[preset].xp} XP eintragen
-                        </button>
-                        <button className="btn-x" onClick={()=>setPicking(null)}>Abbrechen</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button className="btn-add" onClick={()=>{setPicking(key);setPreset(1);}}>Manueller XP-Eintrag</button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ERFOLGE */}
-        {tab==="erfolge" && (
-          <div className="eg-grid">
-            {data.erfolge.map(e=>{
-              const done=!!e.done;
-              return (
-                <div key={e.id} className={`eg-card ${done?"on":"off"}`}>
-                  <button className="eg-del" onClick={()=>delErfolg(e.id)}>×</button>
-                  <div className="eg-name" style={{color:done?"#e0b968":"#c4c4c4"}}>{e.name}</div>
-                  <div className="eg-desc">{e.desc}</div>
-                  {done
-                    ? <div className="eg-date" onClick={()=>toggleErfolg(e.id)} style={{cursor:"pointer"}}>Erreicht {e.done}</div>
-                    : <div className="eg-hint" onClick={()=>toggleErfolg(e.id)}>Klick zum Markieren</div>}
-                </div>
-              );
-            })}
-            <button className="add-erfolg" onClick={()=>setModal({name:"",desc:""})}>+ Erfolg hinzufügen</button>
-          </div>
-        )}
-
-        {/* MEILENSTEINE */}
-        {tab==="meilensteine" && (
-          <div className="ms-sec">
-            {Object.entries(SKILLS).map(([key,sk])=>{
-              const ms=data.meilensteine[key]||[];
-              const done=ms.filter(m=>m.done).length;
-              const pct=ms.length?Math.round((done/ms.length)*100):0;
-              return (
-                <div key={key}>
-                  <div className="ms-hdr">
-                    <span className="ms-lbl">{sk.label}</span>
-                    <span className="ms-prog" style={{color:sk.color}}>{done} / {ms.length}</span>
-                  </div>
-                  <div className="ms-bar"><div className="ms-bfill" style={{width:`${pct}%`,background:sk.color}}/></div>
-                  {ms.map(m=>(
-                    <div key={m.id} className="ms-item">
-                      <div className="ms-chk" onClick={()=>toggleMS(key,m.id)} style={{
-                        border:`1.5px solid ${m.done?sk.color:"rgba(255,255,255,.18)"}`,
-                        background:m.done?sk.color:"none",color:"#191919",
-                      }}>{m.done?"✓":""}</div>
-                      <span className="ms-txt" onClick={()=>toggleMS(key,m.id)} style={{
-                        color:m.done?"#7d7d7d":"#dcdcdc",textDecoration:m.done?"line-through":"none",
-                      }}>{m.text}</span>
-                      <button className="ms-del" onClick={()=>delMS(key,m.id)}>×</button>
-                    </div>
-                  ))}
-                  <div className="ms-add">
-                    <input className="ms-input" placeholder="Neuer Meilenstein…"
-                      value={msInput[key]||""}
-                      onChange={e=>setMsInput(s=>({...s,[key]:e.target.value}))}
-                      onKeyDown={e=>{if(e.key==="Enter")addMS(key);}}/>
-                    <button className="ms-addbtn" onClick={()=>addMS(key)}>+</button>
-                  </div>
-                  <div className="ms-gap"/>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* VERLAUF */}
-        {tab==="verlauf" && (
-          <div className="lg-sec">
-            {(!data.log||data.log.length===0)?(
-              <div className="lg-empty">Noch keine Einträge.</div>
-            ):(
-              <>
-                {data.log.map((e,i)=>{
-                  const sk=SKILLS[e.skill];
-                  return (
-                    <div key={i} className="lg-item">
-                      <div className="lg-badge" style={{background:`${sk?.color}26`,color:sk?.color}}>{sk?.abbr}</div>
-                      <div style={{flex:1}}>
-                        <div className="lg-note">{e.note||sk?.label}</div>
-                        <div className="lg-src">{e.src==="notion"?"via Notion":"manuell"}</div>
-                      </div>
-                      <span className="lg-date">{e.ts}</span>
-                      <span className="lg-xp">+{e.xp}</span>
-                    </div>
-                  );
-                })}
-                <button className="lg-clr" onClick={()=>setData(p=>({...p,log:[]}))}>Verlauf leeren</button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  lay.innerHTML="";
+  lanes.forEach((l,i)=>{const y=AX+i*LH+LH/2;
+    ms.filter(l.match).sort((a,b)=>d(a.date)-d(b.date)).forEach((m,idx)=>{
+      const x=X(d(m.date)),past=d(m.date)<TODAY;
+      let st=m.status; if(m.start)st="start"; else if(m.status==="planned"&&past)st="due";
+      const above=idx%2===0,el=document.createElement("div");
+      el.className=`nd ${st} ${m.major?"major":""} ${above?"above":"below"} ${past&&m.status!=="done"&&!m.start?"dim":""}`;
+      el.style.left=x+"px";el.style.top=y+"px";el.style.setProperty("--tc",l.color);
+      el.innerHTML=`<button class="dt" aria-label="${esc(m.title)}"></button>
+        <div class="lb"><span class="dd">${fmt(d(m.date))}</span>${esc(m.title)}</div>`;
+      el.querySelector(".dt").onclick=()=>detail(m.id);
+      el.querySelector(".lb").onclick=()=>detail(m.id);
+      lay.appendChild(el);});
+  });
+  requestAnimationFrame(()=>{brd.scrollLeft=Math.max(0,xt-150);});
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+/* ============ CHART ============ */
+function chart(mount,se){
+  const H=210,W=Math.max(280,mount.clientWidth||500),PL=46,PR=56,PT=14,PB=26;
+  const pts=se.points.map(p=>({...p,t:d(p.date).getTime()}));
+  if(!pts.length){mount.innerHTML=`<div class="empty">Noch keine Werte.</div>`;return;}
+  let t0=Math.min(...pts.map(p=>p.t)),t1=Math.max(...pts.map(p=>p.t));if(t0===t1)t1=t0+2592000000;
+  let v0=Math.min(...pts.map(p=>p.value)),v1=Math.max(...pts.map(p=>p.value));
+  const pad=(v1-v0)*0.15||v1*0.1||1;const lo=Math.max(0,v0-pad),hi=v1+pad;
+  const X=t=>PL+(t-t0)/(t1-t0)*(W-PL-PR),Y=v=>PT+(1-(v-lo)/(hi-lo))*(H-PT-PB);
+  const plan=pts.filter(p=>p.plan).sort((a,b)=>a.t-b.t),act=pts.filter(p=>!p.plan).sort((a,b)=>a.t-b.t);
+  let s=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  const TH=THEME();
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);
+    s+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="${TH.grid}"/>
+      <text class="cax" x="${PL-8}" y="${y+3}" text-anchor="end">${nf(Math.round(v))}</text>`;}
+  [t0,(t0+t1)/2,t1].forEach(t=>{const x=new Date(t);
+    s+=`<text class="cax" x="${X(t)}" y="${H-8}" text-anchor="middle">${MO[x.getMonth()]} ${String(x.getFullYear()).slice(2)}</text>`;});
+  if(TODAY.getTime()>=t0&&TODAY.getTime()<=t1){const x=X(TODAY.getTime());
+    s+=`<line x1="${x}" y1="${PT}" x2="${x}" y2="${H-PB}" stroke="${TH.today}" stroke-opacity="0.28" stroke-dasharray="3 3"/>`;}
+  const pth=a=>a.map((p,i)=>`${i?"L":"M"}${X(p.t)},${Y(p.value)}`).join(" ");
+  if(plan.length>1)s+=`<path d="${pth(plan)}" fill="none" stroke="${se.color}" stroke-width="1.8" stroke-dasharray="5 5" opacity="0.45"/>`;
+  plan.forEach(p=>s+=`<circle cx="${X(p.t)}" cy="${Y(p.value)}" r="3.2" fill="${TH.card}" stroke="${se.color}" stroke-width="1.5" opacity="0.6"/>`);
+  if(plan.length){const l=plan[plan.length-1];
+    s+=`<text class="cnum" x="${X(l.t)+7}" y="${Y(l.value)+4}" fill="${se.color}" opacity="0.75">${nf(l.value)}</text>`;}
+  if(act.length){
+    if(act.length>1){s+=`<path d="${pth(act)} L${X(act[act.length-1].t)},${H-PB} L${X(act[0].t)},${H-PB} Z" fill="${se.color}" opacity="0.07"/>`;}
+    s+=`<path d="${pth(act)}" fill="none" stroke="${se.color}" stroke-width="2.4" stroke-linecap="round"/>`;
+    act.forEach(p=>s+=`<circle cx="${X(p.t)}" cy="${Y(p.value)}" r="4" fill="${se.color}" stroke="${TH.card}" stroke-width="1.5"/>`);
+    const l=act[act.length-1];
+    s+=`<text class="cnum" x="${X(l.t)+7}" y="${Y(l.value)-7}" fill="${TH.ink}">${nf(l.value)}</text>`;}
+  s+=`</svg>`;
+  mount.innerHTML=s+`<div class="lg"><span><i class="d" style="border-color:${se.color}"></i>Plan</span>
+    <span><i style="border-color:${se.color}"></i>Dein Stand</span></div>`;
+}
+
+function pb(label,cur,target,color,unit){unit=unit===undefined?" %":unit;
+  return `<div class="pb" style="--pc:${color}"><div class="pl"><span>${label}</span>
+    <span class="pv">${cur}${unit} → ${target}${unit}</span></div>
+    <div class="tr"><div class="fl" style="width:${Math.min(100,cur)}%"></div>
+    <div class="tk" style="left:${Math.min(100,target)}%"></div></div></div>`;}
+
+/* ============ STEPS UI ============ */
+function stepsHTML(list,areaId,subjId){
+  const rows=list.map(s=>`<div class="row ${s.done?"done":""}" data-step="${s.id}">
+      <button class="box">${s.done?"✓":""}</button>
+      <div class="tx">${esc(s.text)}${s.cad?`<span class="cad">${esc(s.cad)}</span>`:""}</div>
+      <button class="x" title="Entfernen">×</button></div>`).join("");
+  return `<div class="steps">${rows||`<div style="padding:20px 0;color:var(--faint);font-size:13.5px">Noch keine Schritte — schreib den ersten unten rein.</div>`}
+    <div class="addrow"><input placeholder="+ Nächsten Schritt hinzufügen …" data-newstep="${areaId||""}|${subjId||""}"></div></div>`;
+}
+function wireSteps(scope){
+  scope.querySelectorAll("[data-step]").forEach(row=>{
+    const st=D.steps.find(x=>x.id===row.dataset.step);
+    row.querySelector(".box").onclick=async()=>{st.done=!st.done;await persist();render();};
+    row.querySelector(".x").onclick=async()=>{D.steps=D.steps.filter(x=>x.id!==st.id);await persist();render();};
+  });
+  const inp=scope.querySelector("[data-newstep]");
+  if(inp)inp.onkeydown=async e=>{
+    if(e.key!=="Enter")return;
+    const v=inp.value.trim();if(!v)return;
+    const[a,s]=inp.dataset.newstep.split("|");
+    const o={id:"st"+Date.now(),text:v,done:false};
+    if(s)o.subject=s; if(a)o.area=a;
+    D.steps.push(o);await persist();render();
+  };
+}
+
+/* ============ RENDER ============ */
+function render(){
+  renderNav();
+  const v=document.getElementById("view");
+  if(R.view==="overview")overview(v);
+  else if(R.view==="subject")subjectPage(v,R.id);
+  else{const a=D.areas.find(x=>x.id===R.id);
+    if(!a)return overview(v);
+    a.kind==="folder"?folderPage(v,a):areaPage(v,a);}
+}
+function seg(){return `<div class="seg">${[["0.85","Weit"],["1.7","Mittel"],["3.1","Nah"]]
+  .map(([z,l])=>`<button data-z="${z}" class="${parseFloat(z)===zoom?"on":""}">${l}</button>`).join("")}</div>`;}
+function wireSeg(sc){sc.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{zoom=parseFloat(b.dataset.z);render();});}
+
+/* ---- XP-Header ---- */
+function xpHeaderHTML(){
+  const total=D.areas.reduce((s,a)=>s+xpFor(a.xpKey),0);
+  const tl=xpLvl(total),tb=xpBar(total);
+  const cards=D.areas.map(a=>{
+    const xp=xpFor(a.xpKey),lv=xpLvl(xp),b=xpBar(xp);
+    return `<div class="xpc">
+      <div class="top">
+        <div class="nm"><span class="dt" style="background:${a.color}"></span>${a.name}</div>
+        <div class="lv" style="color:${a.color}">${String(lv).padStart(2,"0")}</div>
+      </div>
+      <div class="tr"><div class="fl" style="width:${b.pct}%;background:${a.color}"></div></div>
+      <div class="sub"><span>${STUFEN[lv-1]}</span><span>${nf(b.cur)} / ${nf(b.need)} XP</span></div>
+    </div>`;}).join("");
+  const sa=D.xp&&D.xp.syncedAt;
+  const stale=sa&&(Date.now()-new Date(sa).getTime()>26*3600*1000);
+  const syncTxt=sa?`Notion-Sync: ${fmt(d(sa.slice(0,10)))}`:"Notion-Sync: noch nicht aktiv — Werte aus Startstand";
+  return `<div class="xpwrap">
+    <div class="xphead">
+      <div><div class="xt">Fortschritt</div><div class="xs">${nf(total)} XP gesamt · vier Bereiche</div></div>
+      <div class="xptot"><div class="lb">Stufe</div><div class="lv" style="color:var(--accent)">${String(tl).padStart(2,"0")}</div><div class="st">${STUFEN[tl-1]}</div></div>
+    </div>
+    <div class="xpgrid">${cards}</div>
+    <div class="xpsync"><span class="d ${stale?"stale":""}"></span>${syncTxt}</div>
+  </div>`;
+}
+
+/* ---- Overview ---- */
+function overview(v){
+  const dAbi=diff(d(D.targets.abitur),TODAY),dSh=diff(d(D.targets.shanghai),TODAY);
+  const zh=D.series.find(s=>s.id==="zh_w");
+  const zhNow=zh?[...zh.points].filter(p=>!p.plan).sort((a,b)=>d(a.date)-d(b.date)).slice(-1)[0]:null;
+  const zhGoal=zh?zh.points.filter(p=>p.plan&&d(p.date)>TODAY).sort((a,b)=>d(a.date)-d(b.date))[0]:null;
+  const all=D.ms.filter(m=>!m.start&&!m.ph);
+  const done=all.filter(m=>m.status==="done").length;
+  const openSteps=D.steps.filter(s=>!s.done).length;
+
+  v.innerHTML=`
+  <div class="hero" style="--hc:#D6455C">
+    <div class="eyebrow"><span class="lab">Heute · ${fmt(TODAY)}</span>
+      ${(function(){const l=D.meta&&D.meta.lastUpdate;if(!l)return"";
+        const t=diff(TODAY,d(l));
+        return `<span class="lab" style="color:${t>10?"var(--warn)":"var(--faint)"}">
+          · Stand ${t===0?"heute":t===1?"gestern":`vor ${t} Tagen`}${t>10?" — Zeit für ein Update":""}</span>`;})()}
+    </div>
+    <h2>In <em>${dSh}&nbsp;Tagen</em> stehst du in Shanghai und sprichst <em>${zhGoal?nf(zhGoal.value):"3.800"}&nbsp;Wörter</em> Chinesisch.</h2>
+    <p class="under">Und bis dahin liegt nur eins vor dir: 140 Karten pro Woche. Der Rest dieser Seite zeigt dir, wo du gerade stehst und was als Nächstes dran ist.</p>
+  </div>
+
+  <div class="strip">
+    <div class="m"><div class="lab">Wörter Chinesisch</div><div class="v">${zhNow?nf(zhNow.value):"—"}</div>
+      <div class="s">Ziel Shanghai: <b>${zhGoal?nf(zhGoal.value):"3.800"}</b></div></div>
+    <div class="m"><div class="lab">Bis Shanghai</div><div class="v">${dSh>0?dSh:0}<small> Tage</small></div>
+      <div class="s">19. Oktober 2026</div></div>
+    <div class="m"><div class="lab">Bis Abitur</div><div class="v">${dAbi>0?dAbi:0}<small> Tage</small></div>
+      <div class="s">Schriftlich ab 13. April 2027</div></div>
+    <div class="m"><div class="lab">Erreicht</div><div class="v">${done}<small> / ${all.length}</small></div>
+      <div class="s"><b>${openSteps}</b> offene Schritte</div></div>
+  </div>
+
+  ${xpHeaderHTML()}
+
+  <div class="sec"><div class="sh"><h3>Alle Wege auf einen Blick</h3><div class="ln"></div>${seg()}</div>
+    <div id="tl"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Deine Bereiche</h3><div class="ln"></div></div>
+    <div class="folder" id="fold"></div></div>`;
+
+  timeline(document.getElementById("tl"),
+    D.areas.map(a=>({name:a.name,color:a.color,match:m=>m.area===a.id})),
+    D.ms,{keyLines:D.keyLines,keyZones:D.keyZones});
+
+  document.getElementById("fold").innerHTML=D.areas.map(a=>{
+    const n=nextMs(a.id,null);
+    const os=D.steps.filter(s=>s.area===a.id&&!s.done).length;
+    const sub=a.kind==="folder"?`${D.subjects.filter(s=>s.area===a.id).length} Fächer · `:"";
+    return `<button class="fc" style="--fc:${a.color}" data-goa="${a.id}">
+      <div class="fn">${a.name}</div>
+      <div class="fm">${sub}<b>${os}</b> offene Schritte<br>
+      ${n?`Als Nächstes: <b>${esc(n.title)}</b>`:"Kein offenes Ziel"}</div></button>`;}).join("");
+  v.querySelectorAll("[data-goa]").forEach(b=>b.onclick=()=>go("area",b.dataset.goa));
+  wireSeg(v);
+}
+
+/* ---- Area page ---- */
+function areaPage(v,a){
+  const n=nextMs(a.id,null),dn=n?diff(d(n.date),TODAY):null;
+  const ms=D.ms.filter(m=>m.area===a.id);
+  const tot=ms.filter(m=>!m.start&&!m.ph).length,done=ms.filter(m=>!m.start&&m.status==="done").length;
+  const ser=D.series.filter(s=>s.area===a.id);
+  const se=ser[0];
+  const now=se?[...se.points].filter(p=>!p.plan).sort((x,y)=>d(x.date)-d(y.date)).slice(-1)[0]:null;
+  const goal=se?se.points.filter(p=>p.plan&&d(p.date)>TODAY).sort((x,y)=>d(x.date)-d(y.date))[0]:null;
+
+  const heroTxt={
+    zh:`Du bist bei <em>${now?nf(now.value):"2.520"}&nbsp;Wörtern</em>. In ${dn||75} Tagen sind es <em>${goal?nf(goal.value):"3.800"}</em> — genug, um in Shanghai einfach zu reden.`,
+    fit:`Kraft, Muskeln, Vitalität. Ab September <em>Block 1</em> — Wave-Progression von 3×3 zu 3×1.`
+  }[a.id]||`${a.name}`;
+
+  v.innerHTML=`
+  <div class="hero" style="--hc:${a.color}">
+    <div class="eyebrow"><span class="dt" style="background:${a.color}"></span><span class="lab">${a.name}</span></div>
+    <h2>${heroTxt}</h2>
+    <div class="actions">
+      <button class="btn sm" data-addms="${a.id}">+ Meilenstein</button>
+      <button class="btn sm" data-addse="${a.id}">+ Kennzahl</button>
+      ${se?`<button class="btn sm dark" data-log="${se.id}">Stand eintragen</button>`:""}
+    </div>
+  </div>
+
+  <div class="strip">
+    ${se?`<div class="m"><div class="lab">${se.unit||se.name}</div><div class="v">${now?nf(now.value):"—"}</div>
+      <div class="s">Ziel: <b>${goal?nf(goal.value):"—"}</b></div></div>`:""}
+    <div class="m"><div class="lab">Nächstes Ziel</div><div class="v" style="font-size:17px;line-height:1.3">${n?esc(n.title):"—"}</div>
+      <div class="s">${n?`${fmt(d(n.date))}${dn!=null?` · in ${dn} Tagen`:""}`:""}</div></div>
+    <div class="m"><div class="lab">Erreicht</div><div class="v">${done}<small> / ${tot}</small></div>
+      <div class="s">Meilensteine</div></div>
+  </div>
+
+  <div class="sec"><div class="sh"><h3>Nächste Schritte</h3><div class="ln"></div></div>
+    <div id="stp"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Dein Weg</h3><div class="ln"></div>${seg()}</div><div id="tl"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Zahlen &amp; Fokus</h3><div class="ln"></div></div>
+    <div class="grid two" id="cards"></div></div>`;
+
+  document.getElementById("stp").innerHTML=stepsHTML(stepsFor(a.id,null),a.id,null);
+  timeline(document.getElementById("tl"),[{name:a.name,color:a.color,match:m=>m.area===a.id}],ms,
+    {keyLines:a.id==="zh"?D.keyLines.filter(k=>k.label==="SHANGHAI"):[],keyZones:[]});
+
+  let c="";
+  ser.forEach(s2=>{c+=`<div class="card"><h4>${esc(s2.name)}</h4><div class="cs">Plan gestrichelt, dein Stand voll</div>
+    <div data-ch="${s2.id}"></div><button class="btn sm" style="margin-top:14px" data-log="${s2.id}">Stand eintragen</button></div>`;});
+  if(a.id==="zh"){
+    const cw=now?now.value:2520;
+    const nt=se?se.points.filter(p=>p.plan&&p.value>cw).sort((x,y)=>x.value-y.value)[0]:null;
+    c+=`<div class="card"><h4>HSK-Aktivierung</h4><div class="cs">wie viel davon wirklich sitzt</div>
+      ${pb("HSK 1–3",65,100,a.color)}${pb("HSK 1–4",45,76,a.color)}
+      <div class="note">Der Strich markiert dein Ziel. HSK 1–4 auf <b>76 %</b> bis Shanghai, auf <b>100 %</b> bis Juni 2027.</div></div>
+    <div class="card"><h4>Rhythmus</h4><div class="cs">was den Fortschritt trägt</div>
+      <blockquote class="quote" style="--qc:${a.color}">In Stressphasen: neue Karten auf null. Reviews niemals pausieren.</blockquote>
+      <ul class="lst"><li><span class="k">Kadenz</span>140 Karten pro Woche · FSRS 90 %</li>
+      <li><span class="k">Input</span>Hepsima als Hörfutter, inkl. 成语</li>
+      <li><span class="k">Eigen-Deck</span>Aufgeschnapptes selbst eintragen</li></ul>
+      ${nt?`<div class="note" style="margin-top:14px">Von ${nf(cw)} auf ${nf(nt.value)} Wörter sind bei 140/Woche noch <b>~${Math.max(1,Math.ceil((nt.value-cw)/140))} Wochen</b>.</div>`:""}
+      </div>`;}
+  if(a.id==="es"){
+    const ch=D.checks.filter(x=>x.area==="es");
+    c+=`<div class="card"><h4>Rezeptiv gegen produktiv</h4><div class="cs">die eigentliche Lücke</div>
+      ${pb("Produktiver Abruf (Band 2–3)",40,75,a.color)}
+      <div class="note">Du hast es nicht verloren — es ist nur nicht abrufbar. Der Sprung von 40 auf 75 % ist Reaktivierung, kein Neulernen.</div></div>
+    <div class="card"><h4>Die vier Fossilien</h4><div class="cs">abhaken, sobald getilgt</div>
+      <div class="steps" style="border:0;padding:0">${ch.map(x=>`<div class="row ${x.done?"done":""}" data-chk="${x.id}">
+        <button class="box">${x.done?"✓":""}</button><div class="tx">${esc(x.label)}</div></div>`).join("")}</div></div>`;}
+  if(a.id==="fit"&&!ser.length){
+    c+=`<div class="card"><div class="empty">Platzhalter — schick mir deine Werte, dann fülle ich Gym, Golf und Schwimmen hier ein.<br><br>
+      <button class="btn sm" data-addse="fit">+ Kennzahl anlegen</button></div></div>`;}
+  document.getElementById("cards").innerHTML=c||`<div class="card"><div class="empty">Noch keine Kennzahlen.</div></div>`;
+  ser.forEach(s2=>{const m=v.querySelector(`[data-ch="${s2.id}"]`);if(m)chart(m,s2);});
+
+  v.querySelectorAll("[data-chk]").forEach(row=>{const x=D.checks.find(y=>y.id===row.dataset.chk);
+    row.querySelector(".box").onclick=async()=>{x.done=!x.done;await persist();render();};});
+  wireCommon(v);wireSteps(v);wireSeg(v);
+}
+
+/* ---- Folder page (Schule) ---- */
+function folderPage(v,a){
+  const subs=D.subjects.filter(s=>s.area===a.id);
+  const dAbi=diff(d(D.targets.abitur),TODAY);
+  const ms=D.ms.filter(m=>m.area===a.id);
+  v.innerHTML=`
+  <div class="hero" style="--hc:${a.color}">
+    <div class="eyebrow"><span class="dt" style="background:${a.color}"></span><span class="lab">Ordner · ${subs.length} Fächer</span></div>
+    <h2>Noch <em>${dAbi} Tage</em> bis zur ersten Klausur des Zentralabiturs.</h2>
+    <p class="under">Jedes Fach hat hier seinen eigenen Weg. Öffne ein Fach für dessen Zeitstrahl und nächste Schritte.</p>
+    <div class="actions">
+      <button class="btn sm" data-addsub="${a.id}">+ Fach</button>
+      <button class="btn sm" data-addms="${a.id}">+ Rahmen-Termin</button>
+    </div>
+  </div>
+
+  <div class="sec"><div class="sh"><h3>Fächer</h3><div class="ln"></div></div>
+    <div class="folder" id="fold"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Nächste Schritte (fächerübergreifend)</h3><div class="ln"></div></div>
+    <div id="stp"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Rahmentermine &amp; alle Fächer</h3><div class="ln"></div>${seg()}</div>
+    <div id="tl"></div></div>
+
+  <div class="sec"><div class="sh"><h3>Der Abiturkalender</h3><div class="ln"></div></div>
+    <div class="grid two"><div class="card"><h4>NRW 2027</h4><div class="cs">die festen Punkte</div>
+      <ul class="lst">
+        <li><span class="k">22.12.26</span>Ende Q2.1 — Vornoten</li>
+        <li><span class="k">05.–09.04</span>Prüfungsvorbereitung, kein Unterricht</li>
+        <li><span class="k">13.04–05.05</span>Schriftliche Prüfungen</li>
+        <li><span class="k">ab 10.05</span>Mündliche Prüfung, 4. Fach</li>
+        <li><span class="k">03.07.27</span>Zeugnis</li></ul></div>
+      <div class="card"><h4>So füllst du ein Fach</h4><div class="cs">Vorschlag, damit es überall gleich läuft</div>
+      <ul class="lst">
+        <li><span class="k">Klausuren</span>Q2.1 und Q2.2 mit Zielpunktzahl</li>
+        <li><span class="k">Themen</span>„Analysis sicher", „Elektrochemie durch"</li>
+        <li><span class="k">Intensiv</span>ein Startpunkt in der Vorbereitungswoche</li>
+        <li><span class="k">Prüfung</span>der zentrale Termin des Fachs</li></ul>
+      <div class="note" style="margin-top:14px">Die Fächer sind Platzhalter. Schick mir deine Kursthemen und Klausurtermine, dann fülle ich sie.</div></div>
+    </div></div>`;
+
+  document.getElementById("fold").innerHTML=subs.map(s=>{
+    const n=nextMs(null,s.id);const os=D.steps.filter(x=>x.subject===s.id&&!x.done).length;
+    const c=msFor(null,s.id).filter(m=>!m.start).length;
+    return `<button class="fc" style="--fc:${s.color}" data-gos="${s.id}">
+      <div class="fn">${esc(s.name)}</div>
+      <div class="fm"><b>${c}</b> Ziele · <b>${os}</b> offene Schritte<br>
+      ${n?`Als Nächstes: <b>${esc(n.title)}</b>`:"Noch nichts geplant"}</div></button>`;}).join("")
+    +`<button class="fc" style="--fc:#C8D3DC" data-addsub="${a.id}">
+      <div class="fn" style="color:var(--muted)">+ Fach anlegen</div>
+      <div class="fm">Deutsch, Sport, Geschichte …</div></button>`;
+
+  document.getElementById("stp").innerHTML=stepsHTML(stepsFor(a.id,null),a.id,null);
+
+  const lanes=[{name:"Rahmen",color:a.color,match:m=>m.area===a.id&&!m.subject}]
+    .concat(subs.map(s=>({name:s.name,color:s.color,match:m=>m.subject===s.id})));
+  timeline(document.getElementById("tl"),lanes,
+    ms.concat(D.ms.filter(m=>m.subject&&subs.some(s=>s.id===m.subject))),
+    {keyZones:D.keyZones});
+
+  v.querySelectorAll("[data-gos]").forEach(b=>b.onclick=()=>go("subject",b.dataset.gos));
+  wireCommon(v);wireSteps(v);wireSeg(v);
+}
+
+/* ---- Subject page ---- */
+function subjectPage(v,id){
+  const s=D.subjects.find(x=>x.id===id);
+  if(!s)return go("overview");
+  const a=D.areas.find(x=>x.id===s.area);
+  const ms=msFor(null,s.id);
+  const n=nextMs(null,s.id),dn=n?diff(d(n.date),TODAY):null;
+  const tot=ms.filter(m=>!m.start&&!m.ph).length,done=ms.filter(m=>m.status==="done").length;
+  v.innerHTML=`
+  <div class="hero" style="--hc:${s.color}">
+    <div class="eyebrow"><button class="btn sm plain" data-back="${a.id}">← ${a.name}</button></div>
+    <h2 style="font-size:34px">${esc(s.name)}</h2>
+    <p class="under">${s.placeholder?"Platzhalter — schick mir Kursthemen, Klausurtermine und deine Zielnote, dann baue ich den Weg aus.":"Dein Weg in diesem Fach."}</p>
+    <div class="actions"><button class="btn sm dark" data-addms="${a.id}" data-subj="${s.id}">+ Meilenstein</button>
+      <button class="btn sm" data-editsub="${s.id}">Fach bearbeiten</button></div>
+  </div>
+
+  <div class="strip">
+    <div class="m"><div class="lab">Nächstes</div><div class="v" style="font-size:17px;line-height:1.3">${n?esc(n.title):"—"}</div>
+      <div class="s">${n?`${fmt(d(n.date))}${dn!=null?` · in ${dn} Tagen`:""}`:"Noch nichts geplant"}</div></div>
+    <div class="m"><div class="lab">Erreicht</div><div class="v">${done}<small> / ${tot}</small></div><div class="s">Meilensteine</div></div>
+    <div class="m"><div class="lab">Bis Abitur</div><div class="v">${diff(d(D.targets.abitur),TODAY)}<small> Tage</small></div>
+      <div class="s">Schriftlich ab 13.04.27</div></div>
+  </div>
+
+  <div class="sec"><div class="sh"><h3>Nächste Schritte</h3><div class="ln"></div></div><div id="stp"></div></div>
+  <div class="sec"><div class="sh"><h3>Dein Weg in ${esc(s.name)}</h3><div class="ln"></div>${seg()}</div><div id="tl"></div></div>`;
+
+  document.getElementById("stp").innerHTML=stepsHTML(stepsFor(null,s.id),a.id,s.id);
+  timeline(document.getElementById("tl"),[{name:s.name,color:s.color,match:m=>m.subject===s.id}],ms,{keyZones:D.keyZones});
+  // Fach-spezifische Zusatzkarten (z. B. Spanisch-Fossilien)
+  const subChecks=D.checks.filter(x=>x.subject===s.id);
+  if(subChecks.length){
+    const card=document.createElement("div");card.className="sec";
+    card.innerHTML=`<div class="sh"><h3>Fokus & Kontrolle</h3><div class="ln"></div></div>
+      <div class="grid two"><div class="card"><h4>Die vier Fossilien</h4><div class="cs">abhaken, sobald getilgt</div>
+      <div class="steps" style="border:0;padding:0">${subChecks.map(x=>`<div class="row ${x.done?"done":""}" data-chk="${x.id}">
+        <button class="box">${x.done?"✓":""}</button><div class="tx">${esc(x.label)}</div></div>`).join("")}</div></div></div>`;
+    v.appendChild(card);
+    v.querySelectorAll("[data-chk]").forEach(row=>{const x=D.checks.find(y=>y.id===row.dataset.chk);
+      row.querySelector(".box").onclick=async()=>{x.done=!x.done;await persist();render();};});
+  }
+  v.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>go("area",b.dataset.back));
+  wireCommon(v);wireSteps(v);wireSeg(v);
+}
+
+function wireCommon(v){
+  v.querySelectorAll("[data-addms]").forEach(b=>b.onclick=()=>editor(null,b.dataset.addms,b.dataset.subj));
+  v.querySelectorAll("[data-addse]").forEach(b=>b.onclick=()=>seriesEditor(b.dataset.addse));
+  v.querySelectorAll("[data-log]").forEach(b=>b.onclick=()=>logVal(b.dataset.log));
+  v.querySelectorAll("[data-addsub]").forEach(b=>b.onclick=()=>openSubject(b.dataset.addsub));
+  v.querySelectorAll("[data-editsub]").forEach(b=>b.onclick=()=>openSubject(null,b.dataset.editsub));
+}
+
+/* ============ DRAWER ============ */
+function detail(id){
+  const m=D.ms.find(x=>x.id===id);const a=D.areas.find(x=>x.id===m.area);
+  const su=m.subject?D.subjects.find(x=>x.id===m.subject):null;
+  const col=su?su.color:a.color,lab=su?`${a.name} · ${su.name}`:a.name;
+  document.getElementById("dwBody").innerHTML=`
+    <div class="tag" style="color:${col}"><span class="dt" style="background:${col}"></span>${lab}</div>
+    <div class="dd">${fmt(d(m.date))}</div><h2>${esc(m.title)}</h2>
+    <div class="lab" style="margin-bottom:8px">Woran du es merkst</div>
+    <div class="mtx">${esc(m.metric||"—")}</div>
+    <div class="srow" id="sr">${[["planned","Geplant"],["progress","Läuft"],["done","Erreicht"]]
+      .map(([x,l])=>`<button data-s="${x}" class="${m.status===x?"on":""}">${l}</button>`).join("")}</div>
+    <div class="acts"><button class="btn" id="ed">Bearbeiten</button><button class="btn danger" id="dl">Löschen</button></div>`;
+  document.querySelectorAll("#sr button").forEach(b=>b.onclick=async()=>{
+    const wasNotDone=m.status!=="done";
+    m.status=b.dataset.s;
+    if(b.dataset.s==="done"&&wasNotDone){
+      // Meilenstein erreicht → XP-Notiz (der eigentliche XP-Wert kommt via Notion-Sync,
+      // aber wir markieren lokal für sofortiges Feedback)
+      xpToast(m.major?"Großer Meilenstein erreicht":"Meilenstein erreicht");
+    }
+    await persist();detail(id);render();});
+  document.getElementById("ed").onclick=()=>editor(m,m.area,m.subject);
+  document.getElementById("dl").onclick=async()=>{if(confirm(`„${m.title}" löschen?`)){
+    D.ms=D.ms.filter(x=>x.id!==id);await persist();closeDw();render();}};
+  document.getElementById("dw").classList.add("open");
+}
+function closeDw(){document.getElementById("dw").classList.remove("open");}
+function openOv(){document.getElementById("ov").classList.add("open");}
+function closeOv(){document.getElementById("ov").classList.remove("open");}
+
+/* ============ EDITORS ============ */
+function editor(m,presetArea,presetSubj){
+  const isNew=!m;
+  const c=m||{area:presetArea||D.areas[0].id,subject:presetSubj,date:iso(),title:"",metric:"",status:"planned"};
+  const subSel=ar=>{const su=D.subjects.filter(x=>x.area===ar);if(!su.length)return"";
+    return `<div class="fd"><label>Fach</label><select id="fS"><option value="">— Rahmen (kein Fach) —</option>
+      ${su.map(x=>`<option value="${x.id}" ${c.subject===x.id?"selected":""}>${x.name}</option>`).join("")}</select></div>`;};
+  document.getElementById("md").innerHTML=`<h3>${isNew?"Neuer Meilenstein":"Bearbeiten"}</h3>
+    <div class="fd"><label>Bereich</label><select id="fA">${D.areas.map(a=>`<option value="${a.id}" ${a.id===c.area?"selected":""}>${a.name}</option>`).join("")}</select></div>
+    <div id="sw">${subSel(c.area)}</div>
+    <div class="fd row"><div><label>Datum</label><input type="date" id="fD" value="${c.date}"></div>
+      <div><label>Status</label><select id="fSt">
+        <option value="planned" ${c.status==="planned"?"selected":""}>Geplant</option>
+        <option value="progress" ${c.status==="progress"?"selected":""}>Läuft</option>
+        <option value="done" ${c.status==="done"?"selected":""}>Erreicht</option></select></div></div>
+    <div class="fd"><label>Titel</label><input id="fT" value="${esc(c.title)}" placeholder="z. B. HSK 4 vollständig aktiv"></div>
+    <div class="fd"><label>Woran du es merkst</label><textarea id="fM" placeholder="Das Zeichen, an dem du erkennst: geschafft.">${esc(c.metric)}</textarea></div>
+    <label style="display:flex;gap:9px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="fJ" style="width:auto" ${c.major?"checked":""}> Großer Meilenstein</label>
+    <div class="mact"><button class="btn" id="mC">Abbrechen</button><button class="btn dark" id="mS">Speichern</button></div>`;
+  openOv();
+  document.getElementById("fA").onchange=e=>{document.getElementById("sw").innerHTML=subSel(e.target.value);};
+  document.getElementById("mC").onclick=closeOv;
+  document.getElementById("mS").onclick=async()=>{
+    const sEl=document.getElementById("fS");
+    const o={area:document.getElementById("fA").value,date:document.getElementById("fD").value,
+      title:document.getElementById("fT").value.trim()||"Ohne Titel",
+      metric:document.getElementById("fM").value.trim(),status:document.getElementById("fSt").value,
+      major:document.getElementById("fJ").checked};
+    const sv=sEl?sEl.value:"";
+    if(isNew){o.id="m"+Date.now();if(sv)o.subject=sv;D.ms.push(o);}
+    else{const t=D.ms.find(x=>x.id===m.id);Object.assign(t,o);delete t.ph;
+      if(sv)t.subject=sv;else delete t.subject;}
+    await persist();closeOv();closeDw();render();};
+}
+
+function openSubject(area,editId){
+  const ex=editId?D.subjects.find(s=>s.id===editId):null;
+  let col=ex?ex.color:(PAL.find(c=>!D.subjects.some(s=>s.color===c))||PAL[0]);
+  document.getElementById("md").innerHTML=`<h3>${ex?"Fach bearbeiten":"Neues Fach"}</h3>
+    <div class="fd"><label>Name</label><input id="sN" value="${ex?esc(ex.name):""}" placeholder="z. B. Deutsch LK, Geschichte GK"></div>
+    <div class="fd"><label>Farbe</label><div class="crow" id="cr">
+      ${PAL.map(c=>`<div class="cs2 ${c===col?"on":""}" data-c="${c}" style="background:${c}"></div>`).join("")}</div></div>
+    <div class="mact">${ex?`<button class="btn danger" id="sDel">Löschen</button>`:""}
+      <button class="btn" id="mC">Abbrechen</button><button class="btn dark" id="mS">Speichern</button></div>`;
+  openOv();
+  document.querySelectorAll("#cr .cs2").forEach(x=>x.onclick=()=>{col=x.dataset.c;
+    document.querySelectorAll("#cr .cs2").forEach(y=>y.classList.remove("on"));x.classList.add("on");});
+  document.getElementById("mC").onclick=closeOv;
+  const del=document.getElementById("sDel");
+  if(del)del.onclick=async()=>{if(confirm(`Fach „${ex.name}" mit allen Zielen löschen?`)){
+    D.subjects=D.subjects.filter(s=>s.id!==ex.id);D.ms=D.ms.filter(m=>m.subject!==ex.id);
+    D.steps=D.steps.filter(s=>s.subject!==ex.id);await persist();closeOv();go("area",ex.area);}};
+  document.getElementById("mS").onclick=async()=>{
+    const nm=document.getElementById("sN").value.trim();if(!nm)return document.getElementById("sN").focus();
+    if(ex){ex.name=nm;ex.color=col;delete ex.placeholder;}
+    else D.subjects.push({id:"su"+Date.now(),area,name:nm,color:col});
+    await persist();closeOv();render();};
+}
+
+function seriesEditor(area){
+  let col=D.areas.find(a=>a.id===area).color;
+  document.getElementById("md").innerHTML=`<h3>Neue Kennzahl</h3>
+    <div class="fd"><label>Name</label><input id="kN" placeholder="z. B. Bankdrücken 1RM"></div>
+    <div class="fd"><label>Einheit</label><input id="kU" placeholder="z. B. kg, Wörter, Sekunden"></div>
+    <div class="fd row"><div><label>Heute</label><input type="number" id="kV" placeholder="aktueller Wert"></div>
+      <div><label>Zielwert</label><input type="number" id="kTV" placeholder="Ziel"></div></div>
+    <div class="fd"><label>Zieldatum</label><input type="date" id="kTD"></div>
+    <div class="fd"><label>Farbe</label><div class="crow" id="cr">
+      ${PAL.map(c=>`<div class="cs2 ${c===col?"on":""}" data-c="${c}" style="background:${c}"></div>`).join("")}</div></div>
+    <div class="mact"><button class="btn" id="mC">Abbrechen</button><button class="btn dark" id="mS">Anlegen</button></div>`;
+  openOv();
+  document.querySelectorAll("#cr .cs2").forEach(x=>x.onclick=()=>{col=x.dataset.c;
+    document.querySelectorAll("#cr .cs2").forEach(y=>y.classList.remove("on"));x.classList.add("on");});
+  document.getElementById("mC").onclick=closeOv;
+  document.getElementById("mS").onclick=async()=>{
+    const nm=document.getElementById("kN").value.trim();if(!nm)return document.getElementById("kN").focus();
+    const v=parseFloat(document.getElementById("kV").value),tv=parseFloat(document.getElementById("kTV").value),
+      td=document.getElementById("kTD").value;
+    const pts=[];
+    if(!isNaN(v)){pts.push({date:iso(),value:v,plan:true});pts.push({date:iso(),value:v});}
+    if(td&&!isNaN(tv))pts.push({date:td,value:tv,plan:true});
+    D.series.push({id:"k"+Date.now(),area,name:nm,unit:document.getElementById("kU").value.trim(),color:col,points:pts});
+    await persist();closeOv();render();};
+}
+
+function logVal(id){
+  const se=D.series.find(s=>s.id===id);
+  document.getElementById("md").innerHTML=`<h3>Stand eintragen</h3>
+    <div class="note" style="margin-bottom:18px">${esc(se.name)} — trag ein, wo du heute wirklich stehst. Die Linie klettert dann sichtbar.</div>
+    <div class="fd row"><div><label>Datum</label><input type="date" id="lD" value="${iso()}"></div>
+      <div><label>Wert</label><input type="number" id="lV" placeholder="z. B. 2680"></div></div>
+    <div class="mact"><button class="btn" id="mC">Abbrechen</button><button class="btn dark" id="mS">Speichern</button></div>`;
+  openOv();
+  document.getElementById("mC").onclick=closeOv;
+  document.getElementById("mS").onclick=async()=>{const dt=document.getElementById("lD").value,
+    v=parseFloat(document.getElementById("lV").value);
+    if(!dt||isNaN(v))return;se.points.push({date:dt,value:v});await persist();closeOv();render();};
+}
+
+function dataMenu(){
+  document.getElementById("md").innerHTML=`<h3>Daten &amp; Backup</h3>
+    <div class="note" style="margin-bottom:18px">Alles speichert sich automatisch. Zum Sichern oder Umziehen exportieren.</div>
+    <div class="fd"><button class="btn block" id="ex">Export als JSON</button></div>
+    <div class="fd"><label>Import</label><textarea id="im" placeholder="JSON hier einfügen"></textarea>
+      <button class="btn block" id="imb" style="margin-top:9px">Importieren</button></div>
+    <div class="mact"><button class="btn" id="mC">Schließen</button><button class="btn danger" id="rs">Zurücksetzen</button></div>`;
+  openOv();
+  document.getElementById("mC").onclick=closeOv;
+  document.getElementById("ex").onclick=()=>{const b=new Blob([JSON.stringify(D,null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="wegmarken-"+iso()+".json";a.click();URL.revokeObjectURL(a.href);};
+  document.getElementById("imb").onclick=async()=>{try{const o=JSON.parse(document.getElementById("im").value);
+    if(!o.ms)throw 0;D=norm(o);await persist();closeOv();go("overview");}catch(e){alert("Import fehlgeschlagen — gültiges JSON einfügen.");}};
+  document.getElementById("rs").onclick=async()=>{if(confirm("Alles zurücksetzen?")){D=seed();await persist();closeOv();go("overview");}};
+}
+
+/* ============ WOCHEN-UPDATE (Patch) ============
+   Patch-Format (alle Felder optional):
+   { "stand":"2026-08-30",
+     "notiz":"KW 32 abgeschlossen",
+     "log":[{"kennzahl":"zh_w","datum":"2026-08-30","wert":2680}],
+     "status":[{"id":"zh1","status":"progress"}],
+     "schritte":[{"bereich":"zh","ersetzen":true,
+                  "items":[{"text":"KW 33 Batch","takt":"sonntags"}]}],
+     "neu":[{"bereich":"zh","datum":"2026-09-30","titel":"…","messbar":"…"}] }
+============================================================ */
+function applyPatch(p){
+  const log=[];
+  if(Array.isArray(p.log))p.log.forEach(e=>{
+    const se=D.series.find(s=>s.id===(e.kennzahl||e.series));
+    if(!se)return log.push(`Kennzahl „${e.kennzahl||e.series}" nicht gefunden`);
+    const dt=e.datum||e.date, v=parseFloat(e.wert!==undefined?e.wert:e.value);
+    if(!dt||isNaN(v))return;
+    se.points=se.points.filter(x=>!(x.date===dt&&!x.plan));
+    se.points.push({date:dt,value:v});
+    log.push(`${se.name}: ${nf(v)} am ${fmt(d(dt))}`);
+  });
+  if(Array.isArray(p.status))p.status.forEach(e=>{
+    const m=D.ms.find(x=>x.id===e.id);
+    if(!m)return log.push(`Meilenstein „${e.id}" nicht gefunden`);
+    if(e.status)m.status=e.status;
+    if(e.datum||e.date)m.date=e.datum||e.date;
+    if(e.messbar||e.metric)m.metric=e.messbar||e.metric;
+    if(e.titel||e.title)m.title=e.titel||e.title;
+    log.push(`„${m.title}" → ${({planned:"geplant",progress:"läuft",done:"erreicht"})[m.status]||m.status}`);
+  });
+  if(Array.isArray(p.schritte))p.schritte.forEach(g=>{
+    const ar=g.bereich||g.area, su=g.fach||g.subject;
+    if(g.ersetzen||g.replace)
+      D.steps=D.steps.filter(s=>su?s.subject!==su:!(s.area===ar&&!s.subject));
+    (g.items||[]).forEach(it=>{
+      const o={id:"st"+Date.now()+Math.random().toString(36).slice(2,6),
+        text:it.text,cad:it.takt||it.cad||"",done:false};
+      if(su)o.subject=su; if(ar)o.area=ar;
+      D.steps.push(o);
+    });
+    log.push(`${(g.items||[]).length} Schritte für ${su||ar}`);
+  });
+  if(Array.isArray(p.neu))p.neu.forEach(e=>{
+    const o={id:e.id||("m"+Date.now()+Math.random().toString(36).slice(2,6)),
+      area:e.bereich||e.area,date:e.datum||e.date,
+      title:e.titel||e.title||"Ohne Titel",metric:e.messbar||e.metric||"",
+      status:e.status||"planned",major:!!(e.gross||e.major)};
+    if(e.fach||e.subject)o.subject=e.fach||e.subject;
+    D.ms.push(o);
+    log.push(`Neu: „${o.title}"`);
+  });
+  if(Array.isArray(p.faecher))p.faecher.forEach(f=>{
+    if(D.subjects.some(s=>s.id===f.id))return;
+    D.subjects.push({id:f.id||("su"+Date.now()+Math.random().toString(36).slice(2,6)),
+      area:f.bereich||f.area||"schule",name:f.name,color:f.farbe||f.color||PAL[D.subjects.length%PAL.length]});
+    log.push(`Fach: ${f.name}`);
+  });
+  D.meta=D.meta||{};
+  D.meta.lastUpdate=p.stand||p.date||iso();
+  if(p.notiz||p.note)D.meta.lastNote=p.notiz||p.note;
+  return log;
+}
+
+function updateMenu(){
+  const last=D.meta&&D.meta.lastUpdate;
+  const weeks=last?Math.floor(diff(TODAY,d(last))/7):null;
+  document.getElementById("md").innerHTML=`<h3>Wochen-Update</h3>
+    <div class="note" style="margin-bottom:18px">
+      ${last?`Letzter Stand: <b>${fmt(d(last))}</b>${weeks!==null&&weeks>0?` — vor ${weeks} ${weeks===1?"Woche":"Wochen"}`:" — aktuell"}.`:"Noch kein Update eingespielt."}
+      ${D.meta&&D.meta.lastNote?`<br>${esc(D.meta.lastNote)}`:""}
+    </div>
+    <div class="fd"><label>Update von Claude einfügen</label>
+      <textarea id="up" style="min-height:150px;font-size:13px" placeholder='{ "stand": "2026-08-30", "log": [ … ] }'></textarea></div>
+    <div class="fd"><button class="btn block" id="cpPrompt">Update-Prompt kopieren</button></div>
+    <div class="mact"><button class="btn" id="mC">Abbrechen</button><button class="btn dark" id="mS">Einspielen</button></div>`;
+  openOv();
+  document.getElementById("mC").onclick=closeOv;
+  document.getElementById("cpPrompt").onclick=()=>{
+    const t=`Bitte aktualisiere meine Wegmarken-App. Durchsuche meine Chats (Chinesisch, Spanisch, Schule) nach dem Lernstand seit ${last?fmt(d(last)):"dem letzten Mal"} und gib mir NUR das JSON-Patch-Objekt zurück, ohne Erklärung drumherum.`;
+    navigator.clipboard&&navigator.clipboard.writeText(t);
+    const b=document.getElementById("cpPrompt");b.textContent="Kopiert ✓";
+    setTimeout(()=>{b.textContent="Update-Prompt kopieren";},1600);
+  };
+  document.getElementById("mS").onclick=async()=>{
+    let raw=document.getElementById("up").value.trim();
+    raw=raw.replace(/^```(?:json)?/,"").replace(/```$/,"").trim();
+    let p;try{p=JSON.parse(raw);}catch(e){return alert("Das ist kein gültiges JSON. Kopier das Objekt noch einmal komplett — von { bis }.");}
+    const log=applyPatch(p);
+    await persist();closeOv();go("overview");
+    setTimeout(()=>alert("Update eingespielt:\n\n"+(log.length?log.join("\n"):"Keine Änderungen erkannt.")),80);
+  };
+}
+
+/* ============ EVENTS ============ */
+document.getElementById("bAdd").onclick=()=>editor(null,R.view==="subject"?
+  (D.subjects.find(s=>s.id===R.id)||{}).area:(R.view==="area"?R.id:null),R.view==="subject"?R.id:null);
+document.getElementById("bData").onclick=dataMenu;
+document.getElementById("bTheme").onclick=()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const next=cur==="dark"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem("wegmarken-theme",next);}catch(e){}
+  if(D)render();
+};
+document.getElementById("bUp").onclick=updateMenu;
+document.getElementById("dwClose").onclick=closeDw;
+document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeOv();};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeOv();closeDw();}});
+let rz;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(D)render();},200);});
+
+/* ============ INIT ============ */
+(async function(){const l=await load();D=l?norm(l):seed();if(!l)await persist();await loadXP();render();})();
 </script>
 </body>
 </html>
