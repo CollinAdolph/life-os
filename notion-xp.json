@@ -1,9 +1,29 @@
 {
-  "_comment": "Auto-generiert durch GitHub Actions. base_xp = manuell gesetzt. task_xp = aus Notion-Aufgaben.",
-  "synced_at": "2026-08-12T05:00:00.000Z",
-  "base_xp":   { "chinese": 1150, "sport": 780, "school": 1400, "neben": 220 },
-  "task_xp":   { "chinese": 0, "sport": 0, "school": 0, "neben": 0 },
-  "total_xp":  { "chinese": 1150, "sport": 780, "school": 1400, "neben": 220 },
-  "task_count":{ "chinese": 0, "sport": 0, "school": 0, "neben": 0 },
-  "review_count": 0
+  "_comment": "Auto-generiert. base_xp = manuell. task_xp = aus Notion.",
+  "synced_at": "2026-08-13T06:37:24.436Z",
+  "base_xp": {
+    "chinese": 1150,
+    "sport": 780,
+    "school": 1400,
+    "neben": 220
+  },
+  "task_xp": {
+    "chinese": 10,
+    "sport": 10,
+    "school": 10,
+    "neben": 10
+  },
+  "total_xp": {
+    "chinese": 1160,
+    "sport": 790,
+    "school": 1410,
+    "neben": 230
+  },
+  "task_count": {
+    "chinese": 0,
+    "sport": 0,
+    "school": 0,
+    "neben": 0
+  },
+  "review_count": 1
 }
