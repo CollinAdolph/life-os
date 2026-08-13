@@ -15,7 +15,7 @@ import { join } from "path";
 const TOKEN           = process.env.NOTION_TOKEN;
 const DB_AUFGABEN     = process.env.NOTION_DB_AUFGABEN     || "0ba369bad4074d348f4ac5124b7e1040";
 const DB_REFLEXIONEN  = process.env.NOTION_DB_REFLEXIONEN  || "8a20d28a79d44ff4b2d9cce9d118fe1c";
-const OUTPUT          = join(process.cwd(), "public", "notion-xp.json");
+const OUTPUT          = join(process.cwd(), "notion-xp.json");
 
 if (!TOKEN) {
   console.error("❌ NOTION_TOKEN fehlt. Als Umgebungsvariable oder GitHub Secret setzen.");
