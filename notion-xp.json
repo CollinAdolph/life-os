@@ -1,6 +1,6 @@
 {
   "_comment": "Auto-generiert. base_xp = manuell. task_xp = aus Notion.",
-  "synced_at": "2026-09-06T09:06:57.509Z",
+  "synced_at": "2026-09-07T09:54:29.268Z",
   "base_xp": {
     "chinese": 1150,
     "sport": 780,
@@ -8,16 +8,16 @@
     "neben": 220
   },
   "task_xp": {
-    "chinese": 10,
-    "sport": 10,
-    "school": 10,
-    "neben": 10
+    "chinese": 20,
+    "sport": 20,
+    "school": 20,
+    "neben": 20
   },
   "total_xp": {
-    "chinese": 1160,
-    "sport": 790,
-    "school": 1410,
-    "neben": 230
+    "chinese": 1170,
+    "sport": 800,
+    "school": 1420,
+    "neben": 240
   },
   "task_count": {
     "chinese": 0,
@@ -25,5 +25,5 @@
     "school": 0,
     "neben": 0
   },
-  "review_count": 1
+  "review_count": 2
 }
